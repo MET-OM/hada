@@ -1,0 +1,13 @@
+[project]
+name = "dnv-data-harvest"
+version = "0.1.0"
+description = "Harvest and re-grid data from Thredds for specific area"
+authors = [ { name = "Gaute Hope", email = "gauteh@met.no" } ]
+dependencies = [ ]
+
+[project.urls]
+repository = "http://github.com/gauteh/dnv-data-harvest"
+
+[project.scripts]
+"dnv_harvest" = "ddh.cli:ddh"
+
