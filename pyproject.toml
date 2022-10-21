@@ -7,7 +7,7 @@ authors = ["Gaute Hope <gauteh@met.no>", "Knut-Frode Dagestad <knutfd@met.no>"]
 [project.urls]
 repository = "http://github.com/gauteh/dnv-data-harvest"
 
-[project.scripts]
+[tool.poetry.scripts]
 "ddh" = "ddh.cli:ddh"
 
 [tool.poetry.dependencies]

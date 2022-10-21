@@ -7,3 +7,5 @@ dependencies:
   - click
   - tqdm
   - coloredlogs
+  - pytest
+  - toml
