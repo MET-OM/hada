@@ -1,15 +1,14 @@
-[project]
-name = "dnv-data-harvest"
+[tool.poetry]
+name = "ddh"
 version = "0.1.0"
 description = "Harvest and re-grid data from Thredds for specific area"
-authors = [ { name = "Gaute Hope", email = "gauteh@met.no" } ]
-dependencies = [ ]
+authors = ["Gaute Hope <gauteh@met.no>", "Knut-Frode Dagestad <knutfd@met.no>"]
 
 [project.urls]
 repository = "http://github.com/gauteh/dnv-data-harvest"
 
 [project.scripts]
-"dnv_harvest" = "ddh.cli:ddh"
+"ddh" = "ddh.cli:ddh"
 
 [tool.poetry.dependencies]
 python = "^3.8"
