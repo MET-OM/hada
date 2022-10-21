@@ -1,7 +1,10 @@
+# The variables to read. Unless variables are specified for a reader, then all variables listed
+# here are acquired. Variable names should be specified in CF-standard names.
 variables = [
   "wind_speed"
 ]
 
+# Prioritized list of datasets
 [datasets.norkyst]
 url = "https://thredds.met.no/thredds/dodsC/sea/norkyst800m/1h/aggregate_be"
 

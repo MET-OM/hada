@@ -3,9 +3,12 @@ channels:
   - conda-forge
 dependencies:
   - xarray
+  - rioxarray
+  - tiledb=2.11
   - netcdf4
   - click
   - tqdm
   - coloredlogs
   - pytest
   - toml
+  - pyproj

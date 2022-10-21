@@ -16,5 +16,14 @@ def ddh(log_level, sources):
     sources = Sources.from_toml(sources)
     logger.debug(f'sources: {sources}')
 
+    # Load datasets
+    # Figure out which variables are available in each dataset
+    # Compute which to acquire from each
+    # Compute target grid
+    # Acquire variables around grid
+    # Interpolate to target grid
+    # Rotate vectors if necessary
+    # Store variables
+
 if __name__ == '__main__':
     ddh()
