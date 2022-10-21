@@ -1,0 +1,9 @@
+name: ddh
+channels:
+  - conda-forge
+dependencies:
+  - xarray
+  - netcdf4
+  - click
+  - tqdm
+  - coloredlogs
