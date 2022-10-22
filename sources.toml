@@ -1,7 +1,8 @@
 # The variables to read. Unless variables are specified for a reader, then all variables listed
 # here are acquired. Variable names should be specified in CF-standard names.
 variables = [
-  "wind_speed"
+  "x_wind",
+  "y_wind",
 ]
 
 # Prioritized list of datasets

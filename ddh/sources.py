@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import List
 import toml
 import xarray as xr
-import rioxarray as rxr
+import rioxarray as _
 import cf_xarray as _
 
 logger = logging.getLogger(__name__)

@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 def ddh(log_level, sources, bbox, nx, ny, output):
     coloredlogs.install(level=log_level)
     logger.info("ddh")
-    bbox = map(lambda x: float(x.strip()), bbox.split(","))
+    bbox = list(map(lambda x: float(x.strip()), bbox.split(",")))
+    assert len(bbox) == 4, "Bounding box should consit of 4 comma-separated floats"
 
     # Load datasets
     sources = Sources.from_toml(sources)
@@ -27,7 +28,7 @@ def ddh(log_level, sources, bbox, nx, ny, output):
     # Compute which to acquire from each
 
     # Compute target grid
-    target = Target(*bbox, nx, ny, output)
+    target = Target(bbox[0], bbox[1], bbox[2], bbox[3], nx, ny, output)
 
     # Acquire variables around grid
     # Interpolate to target grid
