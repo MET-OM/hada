@@ -1,7 +1,7 @@
 from ddh.sources import *
 
-def test_load_default_conf():
-    s = Sources.from_toml("./sources.toml")
+def test_load_default_conf(sourcetoml):
+    s = Sources.from_toml(sourcetoml)
     print(s)
 
 def test_load_norkyst():
