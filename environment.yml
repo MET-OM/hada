@@ -4,6 +4,7 @@ channels:
 dependencies:
   - xarray
   - rioxarray
+  - cf_xarray
   - tiledb=2.11
   - netcdf4
   - click
