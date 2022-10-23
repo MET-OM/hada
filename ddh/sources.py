@@ -7,6 +7,7 @@ import xarray as xr
 import rioxarray as _
 import cf_xarray as _
 import pyproj
+from pykdtree.kdtree import KDTree
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,10 @@ class Dataset:
     url: str
     variables: List[str]
     ds: xr.Dataset
+
+    x: np.ndarray
+    y: np.ndarray
+    kdtree: Any
 
     target_x: np.ndarray
     target_y: np.ndarray
@@ -30,6 +35,12 @@ class Dataset:
             f'{self.name}: opening: {self.url} for variables: {self.variables}'
         )
         self.ds = xr.open_dataset(url, decode_coords='all')
+
+        # TODO: likely to be specific to dataset
+        self.x = self.ds['X'].values
+        self.y = self.ds['Y'].values
+        logger.debug(f'Setting up KDTree for coordinates')
+        self.kdtree = KDTree(np.hstack((self.x, self.y)))
 
         self.crs = pyproj.Proj(self.ds.rio.crs.to_proj4())
         logger.debug(f'CRS: {self.crs}')
@@ -46,12 +57,15 @@ class Dataset:
             # in this datasets coordinate system.
             tf = pyproj.Transformer.from_proj(target.crs, self.crs)
 
-            self.target_x, self.target_y = tf.transform(target.xx.ravel(),
-                                                       target.yy.ravel())
+            self.target_x, self.target_y = tf.transform(
+                target.xx.ravel(), target.yy.ravel())
 
             self.target_hash = target_hash
 
         return self.target_x, self.target_y
+
+    def regrid(self, var):
+        pass
 
 
 @dataclass

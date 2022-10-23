@@ -10,6 +10,7 @@ def test_load_norkyst():
 
     print(d.ds)
     print(d.ds.cf['x_wind'])
+    print(d.ds.cf)
 
 def test_find_var(sourcetoml):
     s = Sources.from_toml(sourcetoml)
