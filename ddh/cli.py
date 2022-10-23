@@ -30,10 +30,26 @@ def ddh(log_level, sources, bbox, nx, ny, output):
     # Compute target grid
     target = Target(bbox[0], bbox[1], bbox[2], bbox[3], nx, ny, output)
 
-    # Acquire variables around grid
-    # Interpolate to target grid
-    # Rotate vectors if necessary
-    # Store variables
+    for var in sources.variables:
+        logger.info(f'Searching for variable {var}')
+        (d, v) = sources.find_dataset_for_var(var)
+
+        if v is not None:
+            logger.info(f'Extracting {var} from {d}')
+            # Calculate target grid on source grid
+            d.calculate_grid(target)
+
+            # Acquire variables around grid
+
+            # Interpolate to target grid
+
+            # Rotate vectors if necessary
+
+            # Store variables
+        else:
+            logger.error(f'No dataset found for variable {var}.')
+
+    # Flush file
 
 if __name__ == '__main__':
     ddh()
