@@ -12,6 +12,16 @@ def test_load_norkyst():
     print(d.ds.cf['x_wind'])
     print(d.ds.cf)
 
+    # dd, i = d.kdtree.query(np.array([d.x[0], d.y[0]]))
+    # print(i)
+
+    # np.testing.assert_array_equal(i, [0, 0])
+
+    # dd, i = d.kdtree.query(np.array([d.x[-1], d.y[-1]]))
+    # print(i)
+    # print(d.x.shape)
+    # np.testing.assert_array_equal(i, [len(d.x)-1, len(d.y)-1])
+
 def test_find_var(sourcetoml):
     s = Sources.from_toml(sourcetoml)
     _, v = s.find_dataset_for_var('x_wind')

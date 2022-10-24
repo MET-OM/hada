@@ -34,13 +34,14 @@ class Dataset:
         logger.info(
             f'{self.name}: opening: {self.url} for variables: {self.variables}'
         )
-        self.ds = xr.open_dataset(url, decode_coords='all')
+        self.ds = xr.decode_cf(xr.open_dataset(url, decode_coords='all'))
 
         # TODO: likely to be specific to dataset
         self.x = self.ds['X'].values
         self.y = self.ds['Y'].values
-        logger.debug(f'Setting up KDTree for coordinates')
-        self.kdtree = KDTree(np.hstack((self.x, self.y)))
+
+        # logger.debug(f'Setting up KDTree for coordinates')
+        # self.kdtree = KDTree(np.vstack((self.x, self.y)).T)
 
         self.crs = pyproj.Proj(self.ds.rio.crs.to_proj4())
         logger.debug(f'CRS: {self.crs}')
@@ -64,8 +65,10 @@ class Dataset:
 
         return self.target_x, self.target_y
 
-    def regrid(self, var):
-        pass
+    def regrid(self, var, target, t0, t1):
+        logger.info(f'Regridding {var} between {t0} and {t1}')
+        ds = self.ds.sel(time=slice(t0, t1))
+        # it0 = np.argmax(self.ds['time']>np.datetime64(t0))
 
 
 @dataclass

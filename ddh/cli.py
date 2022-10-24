@@ -1,6 +1,7 @@
 import logging
 import coloredlogs
 import click
+from datetime import datetime, timedelta
 
 from .sources import Sources
 from .target import Target
@@ -13,10 +14,19 @@ logger = logging.getLogger(__name__)
 @click.option('--bbox', default="5,10,60,65", help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
 @click.option('--nx', default=100, help='Resolution in x (longitude)')
 @click.option('--ny', default=100, help='Resolution in y (latitude)')
+@click.option('--t0', type=click.DateTime(), help='Time start')
+@click.option('--t1', type=click.DateTime(), help='Time start')
 @click.option('--output', type=click.Path(), help='Output file')
-def ddh(log_level, sources, bbox, nx, ny, output):
+def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
     coloredlogs.install(level=log_level)
-    logger.info("ddh")
+
+    if t0 is None:
+        t0 = datetime.utcnow() - timedelta(days=1)
+
+    if t1 is None:
+        t1 = datetime.utcnow()
+
+    logger.info(f"ddh: {t0} -> {t1}")
     bbox = list(map(lambda x: float(x.strip()), bbox.split(",")))
     assert len(bbox) == 4, "Bounding box should consit of 4 comma-separated floats"
 
@@ -39,9 +49,8 @@ def ddh(log_level, sources, bbox, nx, ny, output):
             # Calculate target grid on source grid
             d.calculate_grid(target)
 
-            # Acquire variables around grid
-
-            # Interpolate to target grid
+            # Acquire variables on target grid
+            vo = d.regrid(v, target, t0, t1)
 
             # Rotate vectors if necessary
 
