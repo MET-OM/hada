@@ -8,6 +8,7 @@ import rioxarray as _
 import cf_xarray as _
 import pyproj
 from pykdtree.kdtree import KDTree
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -117,16 +118,35 @@ class Dataset:
 
         tx = np.floor((self.target_x[self.inbounds] - x0) / self.dx).astype(int)
         ty = np.floor((self.target_y[self.inbounds] - y0) / self.dy).astype(int)
-        vo = block.values[:, ty.ravel(), tx.ravel()]
 
+        shape = (var.time.size, *self.target_x.shape)
 
-        # vo = var.sel(X=self.x[0:10], Y=self.y[0:10], method='nearest')
+        vo = np.full(shape, np.nan, dtype=block.dtype)
+        vo[:, self.inbounds] = block.values[:, ty.ravel(), tx.ravel()]
 
-        vo.shape = (var.time.size, *self.target_x.shape)
-        print(f'{self.target_x.ravel()=}, {vo.shape=}')
+        vo = xr.DataArray(vo,
+                          [
+                              ("time", var.time.data),
+                              ("latitude", target.y),
+                              ("longitude", target.x),
+                          ],
+                          attrs=var.attrs,
+                          name=var.name)
 
-        # logger.debug(f'Block ({block.shape}) -> vo ({vo.shape})')
+        vo.latitude.attrs['units'] = 'degrees_north'
+        vo.latitude.attrs['standard_name'] = 'latitude'
+        vo.latitude.attrs['long_name'] = 'latitude'
 
+        vo.longitude.attrs['units'] = 'degrees_east'
+        vo.longitude.attrs['standard_name'] = 'longitude'
+        vo.longitude.attrs['long_name'] = 'longitude'
+        vo.attrs['grid_mapping'] = target.proj_name
+
+        plt.figure()
+        vo.isel(time=1).plot()
+        logger.debug(f'Block ({block.shape}) -> vo ({vo.shape})')
+
+        plt.show()
         return vo
 
 
