@@ -5,10 +5,10 @@ import pyproj
 logger = logging.getLogger(__name__)
 
 class Target:
-    crs = pyproj.Proj('+proj=latlong +ellps=WGS84')
+    crs = pyproj.Proj('epsg:4326')
 
-    x: np.ndarray
-    y: np.ndarray
+    x: np.ndarray  #  longitudes
+    y: np.ndarray  #  latitudes
 
     xx: np.ndarray
     yy: np.ndarray
@@ -25,7 +25,7 @@ class Target:
         self.output = output
 
         self.x = np.linspace(xmin, xmax, nx)
-        self.y = np.linspace(xmin, xmax, ny)
+        self.y = np.linspace(ymin, ymax, ny)
         self.xx, self.yy = np.meshgrid(self.x, self.y)
 
         logger.info(f'Target grid set up: {xmin, xmax, ymin, ymax}, resolution: {nx} x {ny}, output: {output}')

@@ -2,7 +2,7 @@
 # here are acquired. Variable names should be specified in CF-standard names.
 variables = [
   "x_wind",
-  "y_wind",
+  # "y_wind",
 ]
 
 # Prioritized list of datasets
