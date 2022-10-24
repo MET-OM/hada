@@ -38,7 +38,7 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
     # Compute target grid
     target = Target(bbox[0], bbox[1], bbox[2], bbox[3], nx, ny, output)
 
-    regridded_vars = []
+    ds = xr.Dataset()
 
     for var in sources.variables:
         logger.info(f'Searching for variable {var}')
@@ -51,14 +51,13 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
 
             # Acquire variables on target grid
             vo = d.regrid(v, target, t0, t1)
-            regridded_vars.append(vo)
+            ds[vo.name] = vo
 
             # Rotate vectors if necessary
         else:
             logger.error(f'No dataset found for variable {var}.')
 
     logger.info('Merging variables into new dataset..')
-    ds = xr.merge(regridded_vars)
     ds[target.proj_name] = target.proj_var
     print(ds)
 

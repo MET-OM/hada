@@ -141,6 +141,7 @@ class Dataset:
         vo.longitude.attrs['standard_name'] = 'longitude'
         vo.longitude.attrs['long_name'] = 'longitude'
         vo.attrs['grid_mapping'] = target.proj_name
+        vo.attrs['source'] = self.url
 
         # plt.figure()
         # vo.isel(time=1).plot()
