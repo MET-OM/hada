@@ -112,7 +112,7 @@ class Dataset:
 
         logger.debug(f'Load block between x: {x0}..{x1}, y: {y0}..{y1}')
         block = var.sel(X=slice(x0, x1), Y=slice(y0, y1)).load()
-        block.isel(time=1).plot()
+        # block.isel(time=1).plot()
 
         logger.debug(f'Extracting values from block: {block.shape=}')
 
@@ -142,11 +142,11 @@ class Dataset:
         vo.longitude.attrs['long_name'] = 'longitude'
         vo.attrs['grid_mapping'] = target.proj_name
 
-        plt.figure()
-        vo.isel(time=1).plot()
+        # plt.figure()
+        # vo.isel(time=1).plot()
         logger.debug(f'Block ({block.shape}) -> vo ({vo.shape})')
 
-        plt.show()
+        # plt.show()
         return vo
 
 

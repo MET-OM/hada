@@ -5,6 +5,9 @@ from ddh.target import Target
 def test_init(tmpdir):
     t = Target(5, 10, 55, 60, 100, 100, tmpdir)
 
+def test_proj_attr(tmpdir):
+    t = Target(5, 10, 55, 60, 100, 100, tmpdir)
+    print(t.proj_var)
 
 def test_calculate_grid(tmpdir):
     d = Dataset(

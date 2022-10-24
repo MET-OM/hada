@@ -2,6 +2,7 @@ import logging
 import coloredlogs
 import click
 from datetime import datetime, timedelta
+import xarray as xr
 
 from .sources import Sources
 from .target import Target
@@ -34,11 +35,10 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
     sources = Sources.from_toml(sources)
     logger.debug(f'sources: {sources}')
 
-    # Figure out which variables are available in each dataset
-    # Compute which to acquire from each
-
     # Compute target grid
     target = Target(bbox[0], bbox[1], bbox[2], bbox[3], nx, ny, output)
+
+    regridded_vars = []
 
     for var in sources.variables:
         logger.info(f'Searching for variable {var}')
@@ -51,12 +51,16 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
 
             # Acquire variables on target grid
             vo = d.regrid(v, target, t0, t1)
+            regridded_vars.append(vo)
 
             # Rotate vectors if necessary
-
-            # Store variables
         else:
             logger.error(f'No dataset found for variable {var}.')
+
+    logger.info('Merging variables into new dataset..')
+    ds = xr.merge(regridded_vars)
+    ds[target.proj_name] = target.proj_var
+    print(ds)
 
     # Flush file
 

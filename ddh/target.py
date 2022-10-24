@@ -17,6 +17,7 @@ class Target:
     xx: np.ndarray
     yy: np.ndarray
 
+    @property
     def proj_var(self):
         """
         xarray projection definition (CF).
