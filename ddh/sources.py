@@ -7,12 +7,7 @@ import xarray as xr
 import rioxarray as _
 import cf_xarray as _
 import pyproj
-import xesmf as xe
-from functools import cache
 import matplotlib.pyplot as plt
-from pyresample.geometry import AreaDefinition
-from pyresample.bilinear import XArrayBilinearResampler
-from pyresample import bilinear, kd_tree
 
 logger = logging.getLogger(__name__)
 
@@ -69,72 +64,87 @@ class Dataset:
     def __repr__(self):
         return f'<Dataset ({self.name} / {self.url})>'
 
-    @cache
-    def __make_regridder__(self, target):
-        logger.debug(f'Making regridder for {self.name}..')
-        return xe.Regridder(self.ds, target.ds, 'bilinear')
+    def calculate_grid(self, target):
+        target_hash = hash(target)
+        if self.target_hash != target_hash:
+            logger.debug(f'Calculating grid for target..')
 
-    def regrid_xesmf(self, var, target, t0, t1):
-        re = self.__make_regridder__(target)
+            # Calculating the location of the target grid cells
+            # in this datasets coordinate system.
+            # tf = pyproj.Transformer.from_proj(target.crs, self.crs)
+
+            # self.target_x, self.target_y = tf.transform(
+            #     target.xx.ravel(), target.yy.ravel())
+
+            self.target_x, self.target_y = self.crs(target.xx.ravel(),
+                                                    target.yy.ravel(),
+                                                    inverse=False)
+            self.target_x.shape = target.xx.shape
+            self.target_y.shape = target.yy.shape
+
+            # Target coordinates within source domain
+            self.inbounds = (self.target_x>=self.xmin) & (self.target_x<self.xmax) & (self.target_y>=self.ymin) & (self.target_y<self.ymax)
+
+            if not any(self.inbounds.ravel()):
+                logger.warning('Target is outside the domain of this reader')
+
+            self.target_hash = target_hash
+
+        return self.target_x, self.target_y
+
+    def regrid(self, var, target, t0, t1):
+        """
+        Return values for the target grid.
+        """
+        logger.info(f'Regridding {var} between {t0} and {t1}')
+
         var = var.sel(time=slice(t0, t1))
-        logger.info(f'Regridding {var.name} on {self.name}..')
-        vo = re(var)
 
-        vo.attrs = var.attrs
-        vo.name = var.name
+        # Extract block
+        x0 = np.min(self.target_x[self.inbounds]) - self.dx
+        x1 = np.max(self.target_x[self.inbounds]) + self.dx
+        y0 = np.min(self.target_y[self.inbounds]) - self.dy
+        y1 = np.max(self.target_y[self.inbounds]) + self.dy
 
-        vo.lat.attrs['units'] = 'degrees_north'
-        vo.lat.attrs['standard_name'] = 'latitude'
-        vo.lat.attrs['long_name'] = 'latitude'
+        logger.debug(f'Load block between x: {x0}..{x1}, y: {y0}..{y1}')
+        block = var.sel(X=slice(x0, x1), Y=slice(y0, y1)).load()
+        # block.isel(time=1).plot()
 
-        vo.lon.attrs['units'] = 'degrees_east'
-        vo.lon.attrs['standard_name'] = 'longitude'
-        vo.lon.attrs['long_name'] = 'longitude'
+        logger.debug(f'Extracting values from block: {block.shape=}')
 
+        tx = np.floor((self.target_x[self.inbounds] - x0) / self.dx).astype(int)
+        ty = np.floor((self.target_y[self.inbounds] - y0) / self.dy).astype(int)
+
+        shape = (var.time.size, *self.target_x.shape)
+
+        vo = np.full(shape, np.nan, dtype=block.dtype)
+        vo[:, self.inbounds] = block.values[:, ty.ravel(), tx.ravel()]
+
+        vo = xr.DataArray(vo,
+                          [
+                              ("time", var.time.data),
+                              ("latitude", target.y),
+                              ("longitude", target.x),
+                          ],
+                          attrs=var.attrs,
+                          name=var.name)
+
+        vo.latitude.attrs['units'] = 'degrees_north'
+        vo.latitude.attrs['standard_name'] = 'latitude'
+        vo.latitude.attrs['long_name'] = 'latitude'
+
+        vo.longitude.attrs['units'] = 'degrees_east'
+        vo.longitude.attrs['standard_name'] = 'longitude'
+        vo.longitude.attrs['long_name'] = 'longitude'
         vo.attrs['grid_mapping'] = target.proj_name
         vo.attrs['source'] = self.url
 
         # plt.figure()
-        # vo.isel(time=0).plot()
-        # plt.show(block=True)
+        # vo.isel(time=1).plot()
+        logger.debug(f'Block ({block.shape}) -> vo ({vo.shape})')
 
+        # plt.show()
         return vo
-
-    @cache
-    def __area_definition__(self):
-        logger.debug(f'Setting area definition for {self.name}..')
-        import pyresample.utils
-        return pyresample.utils.load_cf_area(self.url)
-        # return AreaDefinition('source_grid', 'Source grid', proj_id='source_grid',
-        #                       projection=self.crs.to_proj4(), width=len(self.x), height=len(self.y),
-        #                       area_extent=(self.xmin, self.ymin, self.xmax, self.ymax))
-
-    @cache
-    def __regridder__(self, target):
-        logger.debug(f'Creating regridder for {self.name}..')
-        source_area = self.__area_definition__()
-        logger.debug(f'{source_area=}')
-        resampler = XArrayBilinearResampler(source_area, target.area, 30e3)
-        return resampler
-
-
-    def regrid_pyresample(self, var, target, t0, t1):
-        # re = self.__regridder__(target)
-        var = var.sel(time=slice(t0, t1))
-        logger.info(f'Regridding {var.name} on {self.name}..')
-
-        var = var.transpose('Y', 'X', ...)
-
-        print(var)
-
-        # vo = bilinear.resample_bilinear(var, self.__area_definition__(),
-        vo = kd_tree.resample_nearest(self.__area_definition__(), var.data, target.area, radius_of_influence=30e3)
-
-        # vo = re.resample(var)
-        print(vo)
-
-        return vo
-
 
 
 @dataclass
