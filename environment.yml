@@ -13,4 +13,4 @@ dependencies:
   - pytest
   - toml
   - pyproj
-  - pykdtree
+  - xesmf

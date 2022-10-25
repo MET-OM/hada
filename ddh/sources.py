@@ -7,7 +7,8 @@ import xarray as xr
 import rioxarray as _
 import cf_xarray as _
 import pyproj
-from pykdtree.kdtree import KDTree
+import xesmf as xe
+from functools import cache
 import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
@@ -96,6 +97,38 @@ class Dataset:
 
         return self.target_x, self.target_y
 
+    @cache
+    def __make_regridder__(self, target):
+        logger.debug(f'Making regridder for {self.name}..')
+        return xe.Regridder(self.ds, target.ds, 'bilinear')
+
+    def regrid_xesmf(self, var, target, t0, t1):
+        re = self.__make_regridder__(target)
+        var = var.sel(time=slice(t0, t1))
+        logger.info(f'Regridding {var.name} on {self.name}..')
+        vo = re(var)
+
+        vo.attrs = var.attrs
+        vo.name = var.name
+
+        vo.lat.attrs['units'] = 'degrees_north'
+        vo.lat.attrs['standard_name'] = 'latitude'
+        vo.lat.attrs['long_name'] = 'latitude'
+
+        vo.lon.attrs['units'] = 'degrees_east'
+        vo.lon.attrs['standard_name'] = 'longitude'
+        vo.lon.attrs['long_name'] = 'longitude'
+
+        vo.attrs['grid_mapping'] = target.proj_name
+        vo.attrs['source'] = self.url
+
+        plt.figure()
+        vo.isel(time=0).plot()
+        plt.show(block=True)
+
+        return vo
+
+
     def regrid(self, var, target, t0, t1):
         """
         Return values for the target grid.
@@ -140,6 +173,7 @@ class Dataset:
         vo.longitude.attrs['units'] = 'degrees_east'
         vo.longitude.attrs['standard_name'] = 'longitude'
         vo.longitude.attrs['long_name'] = 'longitude'
+
         vo.attrs['grid_mapping'] = target.proj_name
         vo.attrs['source'] = self.url
 
