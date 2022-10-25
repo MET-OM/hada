@@ -21,5 +21,5 @@ jobs:
           miniforge-variant: Mambaforge
       - name: Run tests
         run: |
-          conda activate hada
+          conda activate test
           pytest -vs --log-cli-level=debug
