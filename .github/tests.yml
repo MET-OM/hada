@@ -1,0 +1,13 @@
+jobs:
+  tests:
+    name: pytests (${{ matrix.os }}, Miniforge)
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: ["ubuntu", "macos", "windows"]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: etc/example-environment.yml
+          miniforge-version: latest
