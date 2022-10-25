@@ -46,8 +46,6 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
 
         if v is not None:
             logger.info(f'Extracting {var} from {d}')
-            # Calculate target grid on source grid
-            d.calculate_grid(target)
 
             # Acquire variables on target grid
             vo = d.regrid(v, target, t0, t1)

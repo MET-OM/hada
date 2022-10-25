@@ -8,6 +8,7 @@ import rioxarray as _
 import cf_xarray as _
 import pyproj
 import matplotlib.pyplot as plt
+from functools import cache
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +22,6 @@ class Dataset:
     x: np.ndarray
     y: np.ndarray
     kdtree: Any
-
-    target_x: np.ndarray
-    target_y: np.ndarray
-    target_hash: Any = None
 
     def __init__(self, name, url, variables):
         self.name = name
@@ -64,33 +61,30 @@ class Dataset:
     def __repr__(self):
         return f'<Dataset ({self.name} / {self.url})>'
 
-    def calculate_grid(self, target):
-        target_hash = hash(target)
-        if self.target_hash != target_hash:
-            logger.debug(f'Calculating grid for target..')
+    @cache
+    def __calculate_grid__(self, target):
+        logger.debug(f'Calculating grid for target..')
 
-            # Calculating the location of the target grid cells
-            # in this datasets coordinate system.
-            # tf = pyproj.Transformer.from_proj(target.crs, self.crs)
+        # Calculating the location of the target grid cells
+        # in this datasets coordinate system.
+        # tf = pyproj.Transformer.from_proj(target.crs, self.crs)
 
-            # self.target_x, self.target_y = tf.transform(
-            #     target.xx.ravel(), target.yy.ravel())
+        # self.target_x, self.target_y = tf.transform(
+        #     target.xx.ravel(), target.yy.ravel())
 
-            self.target_x, self.target_y = self.crs(target.xx.ravel(),
-                                                    target.yy.ravel(),
-                                                    inverse=False)
-            self.target_x.shape = target.xx.shape
-            self.target_y.shape = target.yy.shape
+        target_x, target_y = self.crs(target.xx.ravel(),
+                                                target.yy.ravel(),
+                                                inverse=False)
+        target_x.shape = target.xx.shape
+        target_y.shape = target.yy.shape
 
-            # Target coordinates within source domain
-            self.inbounds = (self.target_x>=self.xmin) & (self.target_x<self.xmax) & (self.target_y>=self.ymin) & (self.target_y<self.ymax)
+        # Target coordinates within source domain
+        inbounds = (target_x>=self.xmin) & (target_x<self.xmax) & (target_y>=self.ymin) & (target_y<self.ymax)
 
-            if not any(self.inbounds.ravel()):
-                logger.warning('Target is outside the domain of this reader')
+        if not any(inbounds.ravel()):
+            logger.warning('Target is outside the domain of this reader')
 
-            self.target_hash = target_hash
-
-        return self.target_x, self.target_y
+        return target_x, target_y, inbounds
 
     def regrid(self, var, target, t0, t1):
         """
@@ -98,13 +92,15 @@ class Dataset:
         """
         logger.info(f'Regridding {var} between {t0} and {t1}')
 
+        target_x, target_y, inbounds = self.__calculate_grid__(target)
+
         var = var.sel(time=slice(t0, t1))
 
         # Extract block
-        x0 = np.min(self.target_x[self.inbounds]) - self.dx
-        x1 = np.max(self.target_x[self.inbounds]) + self.dx
-        y0 = np.min(self.target_y[self.inbounds]) - self.dy
-        y1 = np.max(self.target_y[self.inbounds]) + self.dy
+        x0 = np.min(target_x[inbounds]) - self.dx
+        x1 = np.max(target_x[inbounds]) + self.dx
+        y0 = np.min(target_y[inbounds]) - self.dy
+        y1 = np.max(target_y[inbounds]) + self.dy
 
         logger.debug(f'Load block between x: {x0}..{x1}, y: {y0}..{y1}')
         block = var.sel(X=slice(x0, x1), Y=slice(y0, y1)).load()
@@ -112,13 +108,13 @@ class Dataset:
 
         logger.debug(f'Extracting values from block: {block.shape=}')
 
-        tx = np.floor((self.target_x[self.inbounds] - x0) / self.dx).astype(int)
-        ty = np.floor((self.target_y[self.inbounds] - y0) / self.dy).astype(int)
+        tx = np.floor((target_x[inbounds] - x0) / self.dx).astype(int)
+        ty = np.floor((target_y[inbounds] - y0) / self.dy).astype(int)
 
-        shape = (var.time.size, *self.target_x.shape)
+        shape = (var.time.size, *target_x.shape)
 
         vo = np.full(shape, np.nan, dtype=block.dtype)
-        vo[:, self.inbounds] = block.values[:, ty.ravel(), tx.ravel()]
+        vo[:, inbounds] = block.values[:, ty.ravel(), tx.ravel()]
 
         vo = xr.DataArray(vo,
                           [
