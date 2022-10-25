@@ -130,8 +130,8 @@ class Dataset:
                           name=var.name)
 
         # Positions in source grid
-        vo.attrs['x'] = target_x
-        vo.attrs['y'] = target_y
+        # vo.attrs['x'] = target_x
+        # vo.attrs['y'] = target_y
 
         vo.latitude.attrs['units'] = 'degrees_north'
         vo.latitude.attrs['standard_name'] = 'latitude'
@@ -152,7 +152,8 @@ class Dataset:
         return vo
 
     def rotate_vectors(self, vx, vy, target):
-        vox, voy = rotate_vectors(vx.x, vy.y, vx.values, vy.values, self.crs, target.crs)
+        x, y, _ = self.__calculate_grid__(target)
+        vox, voy = rotate_vectors(x, y, vx.values, vy.values, self.crs, target.crs)
         vx.values = vox
         vy.values = voy
 
