@@ -1,4 +1,4 @@
-from ddh.sources import *
+from hada.sources import *
 
 def test_load_default_conf(sourcetoml):
     s = Sources.from_toml(sourcetoml)

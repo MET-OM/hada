@@ -1,4 +1,4 @@
-name: ddh
+name: hada
 channels:
   - conda-forge
 dependencies:

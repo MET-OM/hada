@@ -7,7 +7,6 @@ import xarray as xr
 import rioxarray as _
 import cf_xarray as _
 import pyproj
-import matplotlib.pyplot as plt
 from functools import cache
 
 from .vector import rotate_vectors

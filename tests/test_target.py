@@ -1,5 +1,5 @@
-from ddh.sources import *
-from ddh.target import Target
+from hada.sources import *
+from hada.target import Target
 
 
 def test_init(tmpdir):

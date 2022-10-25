@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @click.option('--t0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
 @click.option('--t1', type=click.DateTime(), help='UTC date-time end (default: now)')
 @click.option('--output', type=click.Path(), help='Output file')
-def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
+def hada(log_level, sources, bbox, nx, ny, t0, t1, output):
     coloredlogs.install(level=log_level)
 
     if t0 is None:
@@ -28,7 +28,7 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
     if t1 is None:
         t1 = datetime.utcnow()
 
-    logger.info(f"ddh: {t0} -> {t1}")
+    logger.info(f"hada: {t0} -> {t1}")
     bbox = list(map(lambda x: float(x.strip()), bbox.split(",")))
     assert len(bbox) == 4, "Bounding box should consit of 4 comma-separated floats"
 
@@ -85,4 +85,4 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
         ds.to_netcdf(output, format='NETCDF4')
 
 if __name__ == '__main__':
-    ddh()
+    hada()
