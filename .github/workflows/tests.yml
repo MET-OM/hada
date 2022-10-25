@@ -15,3 +15,6 @@ jobs:
         with:
           environment-file: environment.yml
           miniforge-version: latest
+      - name: Run tests
+        run: |
+          pytest -vs --log-cli-level=debug
