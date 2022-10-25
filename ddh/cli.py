@@ -57,11 +57,14 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
         else:
             logger.error(f'No dataset found for variable {var}.')
 
-    logger.info('Merging variables into new dataset..')
     ds[target.proj_name] = target.proj_var
+    logger.info('Re-gridded dataset done')
     print(ds)
 
-    # Flush file
+    # Save to file
+    if output is not None:
+        logger.info(f'Saving dataset to file: {output}..')
+        ds.to_netcdf(output, format='NETCDF4')
 
 if __name__ == '__main__':
     ddh()
