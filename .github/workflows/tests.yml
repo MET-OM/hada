@@ -4,8 +4,11 @@ on: [push]
 
 jobs:
   tests:
-    name: pytests (${{ matrix.os }}, Miniforge)
+    name: pytests (${{ matrix.os }}, Mambaforge)
     runs-on: ${{ matrix.os }}-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     strategy:
       matrix:
         os: ["ubuntu", "macos", "windows"]
@@ -15,6 +18,7 @@ jobs:
         with:
           environment-file: environment.yml
           miniforge-version: latest
+          miniforge-variant: Mambaforge
       - name: Run tests
         run: |
           conda activate hada
