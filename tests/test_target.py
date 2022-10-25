@@ -16,9 +16,9 @@ def test_calculate_grid(tmpdir):
         ['x_wind'])
     t = Target(5, 10, 55, 60, 100, 100, tmpdir)
 
-    tx, ty = d.calculate_grid(t)
+    tx, ty, _ = d.__calculate_grid__(t)
 
-    assert len(tx) == 100 * 100
-    assert len(ty) == 100 * 100
+    assert tx.shape == (100, 100)
+    assert ty.shape == (100, 100)
 
     print(tx, ty)
