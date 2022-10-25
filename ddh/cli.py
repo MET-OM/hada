@@ -40,7 +40,7 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
 
     ds = xr.Dataset()
 
-    for var in sources.variables:
+    for var in sources.scalar_variables:
         logger.info(f'Searching for variable {var}')
         (d, v) = sources.find_dataset_for_var(var)
 
@@ -54,6 +54,26 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
             # Rotate vectors if necessary
         else:
             logger.error(f'No dataset found for variable {var}.')
+
+    for vvar in sources.vector_variables:
+        varx = vvar[0]
+        vary = vvar[1]
+        logger.info(f'Searching for variable {varx},{vary}')
+        (d, vx, vy) = sources.find_dataset_for_var_pair(varx, vary)
+
+        if vx is not None:
+            logger.info(f'Extracting {varx} and {vary} from {d}')
+
+            # Acquire variables on target grid
+            vox = d.regrid(vx, target, t0, t1)
+            voy = d.regrid(vy, target, t0, t1)
+
+            # Rotate vectors
+
+            ds[vox.name] = vox
+            ds[voy.name] = voy
+        else:
+            logger.error(f'No dataset found for variable {varx},{vary}.')
 
     logger.info('Merging variables into new dataset..')
     ds[target.proj_name] = target.proj_var

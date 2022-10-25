@@ -63,7 +63,7 @@ class Dataset:
 
     @cache
     def __calculate_grid__(self, target):
-        logger.debug(f'Calculating grid for target..')
+        logger.debug(f'Calculating grid for target: {target.xx.shape}..')
 
         # Calculating the location of the target grid cells
         # in this datasets coordinate system.
@@ -72,9 +72,7 @@ class Dataset:
         # self.target_x, self.target_y = tf.transform(
         #     target.xx.ravel(), target.yy.ravel())
 
-        target_x, target_y = self.crs(target.xx.ravel(),
-                                                target.yy.ravel(),
-                                                inverse=False)
+        target_x, target_y = self.crs(target.xx.ravel(), target.yy.ravel(), inverse=False)
         target_x.shape = target.xx.shape
         target_y.shape = target.yy.shape
 
@@ -94,7 +92,12 @@ class Dataset:
 
         target_x, target_y, inbounds = self.__calculate_grid__(target)
 
+        logger.info('Selecting time slice..')
         var = var.sel(time=slice(t0, t1))
+
+        if 'depth' in var.dims:
+            logger.info('Selecting depth0..')
+            var = var.isel(depth=0)
 
         # Extract block
         x0 = np.min(target_x[inbounds]) - self.dx
@@ -145,7 +148,8 @@ class Dataset:
 
 @dataclass
 class Sources:
-    variables: List[str]
+    scalar_variables: List[str]
+    vector_variables: List[str]
     datasets: List[Dataset]
 
     def find_dataset_for_var(self, var):
@@ -160,12 +164,24 @@ class Sources:
 
         return (None, None)
 
+    def find_dataset_for_var_pair(self, var1, var2):
+        """
+        Find first dataset with both variables.
+        """
+        for d in self.datasets:
+            logger.debug(f'Looking for {var1} and {var2} in {d}')
+            if var1 in d.variables and var2 in d.variables:
+                if d.ds.cf[var1] is not None and d.ds.cf[var2] is not None:
+                    return (d, d.ds.cf[var1], d.ds.cf[var2])
+
+        return (None, None)
+
     @staticmethod
     def from_toml(file):
         logger.info(f'Loading sources from {file}')
         d = toml.load(open(file))
 
-        global_variables = d['variables']
+        global_variables = d['scalar_variables'] + [v for l in d['vector_variables'] for v in l]
 
         datasets = [
             Dataset(name=name,
@@ -173,4 +189,4 @@ class Sources:
                     variables=d.get('variables', global_variables))
             for name, d in d['datasets'].items()
         ]
-        return Sources(d['variables'], datasets)
+        return Sources(scalar_variables=d['scalar_variables'], vector_variables=d['vector_variables'], datasets=datasets)

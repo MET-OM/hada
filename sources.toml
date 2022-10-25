@@ -1,8 +1,19 @@
+# Vindhastighet (m/s)
+# Lufttemperatur (celsius grader)
+# Sjøtemperatur (celsius grader)
+# Signifikant bølgehøyde (m)
+# Iskonsentrasjon (%)
+# Sikt (0/1)*
+# Strømhastighet og strømretning*
+
 # The variables to read. Unless variables are specified for a reader, then all variables listed
 # here are acquired. Variable names should be specified in CF-standard names.
-variables = [
-  "x_wind",
-  "y_wind",
+scalar_variables = [
+  "temperature",
+]
+
+vector_variables = [
+  ["x_wind", "y_wind"]
 ]
 
 # Prioritized list of datasets
