@@ -1,3 +1,7 @@
+name: Tests
+
+on: [push]
+
 jobs:
   tests:
     name: pytests (${{ matrix.os }}, Miniforge)
