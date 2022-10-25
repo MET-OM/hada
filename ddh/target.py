@@ -3,6 +3,7 @@ import logging
 import pyproj
 import xarray as xr
 import xesmf as xe
+from pyresample.geometry import AreaDefinition
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +39,14 @@ class Target:
         self.nx, self.ny = nx, ny
         self.output = output
 
-        self.ds = xe.util.cf_grid_2d(xmin, xmax, self.dx, ymin, ymax, self.dy)
-
-        self.x = self.ds['lon'].values
-        self.y = self.ds['lat'].values
+        self.x = np.linspace(xmin, xmax, nx)
+        self.y = np.linspace(ymin, ymax, ny)
         self.xx, self.yy = np.meshgrid(self.x, self.y)
+
+        self.area = AreaDefinition('latlon_target', 'Target grid', proj_id='latlon',
+                                   projection='EPSG:4326', width=self.nx, height=self.ny,
+                                   area_extent=(self.xmin, self.ymin, self.xmax, self.ymax))
+
 
         logger.info(f'Target grid set up: {xmin, xmax, ymin, ymax}, resolution: {nx} x {ny}, output: {output}')
 

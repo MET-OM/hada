@@ -10,6 +10,9 @@ import pyproj
 import xesmf as xe
 from functools import cache
 import matplotlib.pyplot as plt
+from pyresample.geometry import AreaDefinition
+from pyresample.bilinear import XArrayBilinearResampler
+from pyresample import bilinear, kd_tree
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +99,43 @@ class Dataset:
         # plt.show(block=True)
 
         return vo
+
+    @cache
+    def __area_definition__(self):
+        logger.debug(f'Setting area definition for {self.name}..')
+        import pyresample.utils
+        return pyresample.utils.load_cf_area(self.url)
+        # return AreaDefinition('source_grid', 'Source grid', proj_id='source_grid',
+        #                       projection=self.crs.to_proj4(), width=len(self.x), height=len(self.y),
+        #                       area_extent=(self.xmin, self.ymin, self.xmax, self.ymax))
+
+    @cache
+    def __regridder__(self, target):
+        logger.debug(f'Creating regridder for {self.name}..')
+        source_area = self.__area_definition__()
+        logger.debug(f'{source_area=}')
+        resampler = XArrayBilinearResampler(source_area, target.area, 30e3)
+        return resampler
+
+
+    def regrid_pyresample(self, var, target, t0, t1):
+        # re = self.__regridder__(target)
+        var = var.sel(time=slice(t0, t1))
+        logger.info(f'Regridding {var.name} on {self.name}..')
+
+        var = var.transpose('Y', 'X', ...)
+
+        print(var)
+
+        # vo = bilinear.resample_bilinear(var, self.__area_definition__(),
+        vo = kd_tree.resample_nearest(self.__area_definition__(), var.data, target.area, radius_of_influence=30e3)
+
+        # vo = re.resample(var)
+        print(vo)
+
+        return vo
+
+
 
 @dataclass
 class Sources:

@@ -13,4 +13,6 @@ dependencies:
   - pytest
   - toml
   - pyproj
-  - xesmf
+  - pyresample
+  - zarr
+  - dask

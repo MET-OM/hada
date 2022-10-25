@@ -29,7 +29,7 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
 
     logger.info(f"ddh: {t0} -> {t1}")
     bbox = list(map(lambda x: float(x.strip()), bbox.split(",")))
-    assert len(bbox) == 4, "Bounding box should consit of 4 comma-separated floats"
+    assert len(bbox) == 4, "Bounding box should consist of 4 comma-separated floats"
 
     # Load datasets
     sources = Sources.from_toml(sources)
@@ -46,11 +46,9 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
 
         if v is not None:
             logger.info(f'Extracting {var} from {d}')
-            # Calculate target grid on source grid
-            # d.calculate_grid(target)
 
             # Acquire variables on target grid
-            vo = d.regrid_xesmf(v, target, t0, t1)
+            vo = d.regrid_pyresample(v, target, t0, t1)
             ds[vo.name] = vo
 
             # Rotate vectors if necessary
