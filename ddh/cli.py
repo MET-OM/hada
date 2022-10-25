@@ -6,6 +6,7 @@ import xarray as xr
 
 from .sources import Sources
 from .target import Target
+from . import vector
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,6 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
             # Acquire variables on target grid
             vo = d.regrid(v, target, t0, t1)
             ds[vo.name] = vo
-
-            # Rotate vectors if necessary
         else:
             logger.error(f'No dataset found for variable {var}.')
 
@@ -68,7 +67,7 @@ def ddh(log_level, sources, bbox, nx, ny, t0, t1, output):
             vox = d.regrid(vx, target, t0, t1)
             voy = d.regrid(vy, target, t0, t1)
 
-            # Rotate vectors
+            vox, voy = d.rotate_vectors(vox, voy, target)
 
             ds[vox.name] = vox
             ds[voy.name] = voy

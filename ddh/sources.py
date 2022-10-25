@@ -10,6 +10,8 @@ import pyproj
 import matplotlib.pyplot as plt
 from functools import cache
 
+from .vector import rotate_vectors
+
 logger = logging.getLogger(__name__)
 
 
@@ -128,6 +130,10 @@ class Dataset:
                           attrs=var.attrs,
                           name=var.name)
 
+        # Positions in source grid
+        vo.attrs['x'] = target_x
+        vo.attrs['y'] = target_y
+
         vo.latitude.attrs['units'] = 'degrees_north'
         vo.latitude.attrs['standard_name'] = 'latitude'
         vo.latitude.attrs['long_name'] = 'latitude'
@@ -137,6 +143,7 @@ class Dataset:
         vo.longitude.attrs['long_name'] = 'longitude'
         vo.attrs['grid_mapping'] = target.proj_name
         vo.attrs['source'] = self.url
+        vo.attrs['source_name'] = self.name
 
         # plt.figure()
         # vo.isel(time=1).plot()
@@ -144,6 +151,14 @@ class Dataset:
 
         # plt.show()
         return vo
+
+    def rotate_vectors(self, vx, vy, target):
+        vox, voy = rotate_vectors(vx.x, vy.y, vx.values, vy.values, self.crs, target.crs)
+        vx.values = vox
+        vy.values = voy
+
+        return vx, vy
+
 
 
 @dataclass
