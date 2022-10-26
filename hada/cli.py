@@ -16,10 +16,12 @@ logger = logging.getLogger(__name__)
 @click.option('--bbox', default="5,10,60,65", help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
 @click.option('--nx', default=100, help='Resolution in x (longitude)')
 @click.option('--ny', default=150, help='Resolution in y (latitude)')
-@click.option('--t0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
-@click.option('--t1', type=click.DateTime(), help='UTC date-time end (default: now)')
+@click.option('--from', 't0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
+@click.option('--to', 't1', type=click.DateTime(), help='UTC date-time end (default: now)')
+@click.option('-d', '--dataset-filter', multiple=True, help='Only include datasets containing string')
+@click.option('-v', '--variable-filter', multiple=True, help='Only include variables containing string')
 @click.option('--output', type=click.Path(), help='Output file')
-def hada(log_level, sources, bbox, nx, ny, t0, t1, output):
+def hada(log_level, sources, bbox, nx, ny, t0, t1, dataset_filter, variable_filter, output):
     coloredlogs.install(level=log_level)
 
     if t0 is None:
@@ -33,7 +35,7 @@ def hada(log_level, sources, bbox, nx, ny, t0, t1, output):
     assert len(bbox) == 4, "Bounding box should consit of 4 comma-separated floats"
 
     # Load datasets
-    sources = Sources.from_toml(sources)
+    sources = Sources.from_toml(sources, dataset_filter, variable_filter)
     logger.debug(f'sources: {sources}')
 
     # Compute target grid

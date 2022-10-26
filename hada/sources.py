@@ -189,19 +189,22 @@ class Sources:
                 if d.ds.cf[var1] is not None and d.ds.cf[var2] is not None:
                     return (d, d.ds.cf[var1], d.ds.cf[var2])
 
-        return (None, None)
+        return (None, None, None)
 
     @staticmethod
-    def from_toml(file):
+    def from_toml(file, dataset_filter=(), variable_filter=()):
         logger.info(f'Loading sources from {file}')
         d = toml.load(open(file))
 
         global_variables = d['scalar_variables'] + [v for l in d['vector_variables'] for v in l]
 
+        if len(variable_filter) > 0:
+            global_variables = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), global_variables))
+
         datasets = [
             Dataset(name=name,
                     url=d['url'],
                     variables=d.get('variables', global_variables))
-            for name, d in d['datasets'].items()
+            for name, d in d['datasets'].items() if len(dataset_filter) == 0 or any(map(lambda f: f in name, dataset_filter))
         ]
         return Sources(scalar_variables=d['scalar_variables'], vector_variables=d['vector_variables'], datasets=datasets)
