@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import List, Any
+from typing import List, Any, Dict
 import toml
 import numpy as np
 import xarray as xr
@@ -19,20 +19,42 @@ class Dataset:
     url: str
     variables: List[str]
     ds: xr.Dataset
+    variable_map: Dict
+
+    # name of x and y vars
+    x_v: str
+    y_v: str
 
     x: np.ndarray
     y: np.ndarray
     kdtree: Any
 
-    def __init__(self, name, url, variables):
+    def __init__(self,
+                 name,
+                 url,
+                 x,
+                 y,
+                 global_variables,
+                 variable_map=None,
+                 variables=None):
         self.name = name
         self.url = url
-        self.variables = variables if variables else []
+        self.variables = variables if variables is not None else global_variables
+        self.variable_map = variable_map
+        self.x_v = x
+        self.y_v = y
 
         logger.info(
             f'{self.name}: opening: {self.url} for variables: {self.variables}'
         )
         self.ds = xr.decode_cf(xr.open_dataset(url, decode_coords='all'))
+        if x != 'X':
+            self.ds = self.ds.rename_dims({self.x_v: 'X'})
+            # self.ds.rename_vars({self.x_v: 'X'})
+
+        if y != 'Y':
+            self.ds = self.ds.rename_dims({self.y_v: 'Y'})
+            # self.ds.rename_vars({self.y_v: 'Y'})
 
         # TODO: likely to be specific to dataset
         self.x = self.ds['X'].values
@@ -73,12 +95,15 @@ class Dataset:
         # self.target_x, self.target_y = tf.transform(
         #     target.xx.ravel(), target.yy.ravel())
 
-        target_x, target_y = self.crs(target.xx.ravel(), target.yy.ravel(), inverse=False)
+        target_x, target_y = self.crs(target.xx.ravel(),
+                                      target.yy.ravel(),
+                                      inverse=False)
         target_x.shape = target.xx.shape
         target_y.shape = target.yy.shape
 
         # Target coordinates within source domain
-        inbounds = (target_x>=self.xmin) & (target_x<self.xmax) & (target_y>=self.ymin) & (target_y<self.ymax)
+        inbounds = (target_x >= self.xmin) & (target_x < self.xmax) & (
+            target_y >= self.ymin) & (target_y < self.ymax)
 
         if not any(inbounds.ravel()):
             logger.warning('Target is outside the domain of this reader')
@@ -98,7 +123,7 @@ class Dataset:
 
         if 'depth' in var.dims:
             logger.info('Selecting depth0..')
-            var = var.isel(depth=0)
+            var = var.sel(depth=0)
 
         # Extract block
         x0 = np.min(target_x[inbounds]) - self.dx
@@ -120,12 +145,11 @@ class Dataset:
         vo = np.full(shape, np.nan, dtype=block.dtype)
         vo[:, inbounds] = block.values[:, ty.ravel(), tx.ravel()]
 
-        vo = xr.DataArray(vo,
-                          [
-                              ("time", var.time.data),
-                              ("latitude", target.y),
-                              ("longitude", target.x),
-                          ],
+        vo = xr.DataArray(vo, [
+            ("time", var.time.data),
+            ("latitude", target.y),
+            ("longitude", target.x),
+        ],
                           attrs=var.attrs,
                           name=var.name)
 
@@ -153,12 +177,25 @@ class Dataset:
 
     def rotate_vectors(self, vx, vy, target):
         x, y, _ = self.__calculate_grid__(target)
-        vox, voy = rotate_vectors(x, y, vx.values, vy.values, self.crs, target.crs)
+        vox, voy = rotate_vectors(x, y, vx.values, vy.values, self.crs,
+                                  target.crs)
         vx.values = vox
         vy.values = voy
 
         return vx, vy
 
+    def get_var(self, var):
+        """
+        Return variable name for input variable.
+        """
+        logger.debug(f'Looking for {var} in {self}')
+        if var in self.variables:
+            if var in self.variable_map:
+                logger.debug(f'Variable map: {var} -> {self.variable_map[var]}')
+                return self.variable_map[var]
+            else:
+                if self.ds.cf[var] is not None:
+                    return self.ds.cf[var].name
 
 
 @dataclass
@@ -172,10 +209,9 @@ class Sources:
         Find first dataset with variable.
         """
         for d in self.datasets:
-            logger.debug(f'Looking for {var} in {d}')
-            if var in d.variables:
-                if d.ds.cf[var] is not None:
-                    return (d, d.ds.cf[var])
+            v = d.get_var(var)
+            if v is not None:
+                return (d, d.ds[v])
 
         return (None, None)
 
@@ -186,8 +222,9 @@ class Sources:
         for d in self.datasets:
             logger.debug(f'Looking for {var1} and {var2} in {d}')
             if var1 in d.variables and var2 in d.variables:
-                if d.ds.cf[var1] is not None and d.ds.cf[var2] is not None:
-                    return (d, d.ds.cf[var1], d.ds.cf[var2])
+                if d.ds.cf[[var1]] is not None and d.ds.cf[[var2]] is not None:
+                    print(d.ds.cf[[var1]])
+                    return (d, d.ds.cf[[var1]], d.ds.cf[[var2]])
 
         return (None, None, None)
 
@@ -196,15 +233,20 @@ class Sources:
         logger.info(f'Loading sources from {file}')
         d = toml.load(open(file))
 
-        global_variables = d['scalar_variables'] + [v for l in d['vector_variables'] for v in l]
+        global_variables = d['scalar_variables'] + [
+            v for l in d['vector_variables'] for v in l
+        ]
 
         if len(variable_filter) > 0:
-            global_variables = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), global_variables))
+            global_variables = list(
+                filter(lambda v: any(map(lambda f: f in v, variable_filter)),
+                       global_variables))
 
         datasets = [
-            Dataset(name=name,
-                    url=d['url'],
-                    variables=d.get('variables', global_variables))
-            for name, d in d['datasets'].items() if len(dataset_filter) == 0 or any(map(lambda f: f in name, dataset_filter))
+            Dataset(name=name, **d, global_variables=global_variables)
+            for name, d in d['datasets'].items() if len(dataset_filter) == 0
+            or any(map(lambda f: f in name, dataset_filter))
         ]
-        return Sources(scalar_variables=d['scalar_variables'], vector_variables=d['vector_variables'], datasets=datasets)
+        return Sources(scalar_variables=d['scalar_variables'],
+                       vector_variables=d['vector_variables'],
+                       datasets=datasets)
