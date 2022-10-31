@@ -49,12 +49,12 @@ class Dataset:
         )
         self.ds = xr.decode_cf(xr.open_dataset(url, decode_coords='all'))
         if x != 'X':
-            self.ds = self.ds.rename_dims({self.x_v: 'X'})
-            # self.ds.rename_vars({self.x_v: 'X'})
+            self.ds = self.ds.rename_vars({self.x_v: 'X'})
+            # self.ds = self.ds.rename_dims({self.x_v: 'X'})
 
         if y != 'Y':
-            self.ds = self.ds.rename_dims({self.y_v: 'Y'})
-            # self.ds.rename_vars({self.y_v: 'Y'})
+            self.ds = self.ds.rename_vars({self.y_v: 'Y'})
+            # self.ds = self.ds.rename_dims({self.y_v: 'Y'})
 
         # TODO: likely to be specific to dataset
         self.x = self.ds['X'].values
@@ -140,10 +140,14 @@ class Dataset:
         tx = np.floor((target_x[inbounds] - x0) / self.dx).astype(int)
         ty = np.floor((target_y[inbounds] - y0) / self.dy).astype(int)
 
-        shape = (var.time.size, *target_x.shape)
+        shape = list(block.shape)[:-2] + list(target_x.shape)
+        shape = tuple(shape)
+        logger.debug(f'New shape: {shape}')
 
         vo = np.full(shape, np.nan, dtype=block.dtype)
-        vo[:, inbounds] = block.values[:, ty.ravel(), tx.ravel()]
+        vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
+
+        print(var.coords)
 
         vo = xr.DataArray(vo, [
             ("time", var.time.data),
@@ -238,6 +242,7 @@ class Sources:
         ]
 
         if len(variable_filter) > 0:
+            logger.debug(f'Filtering variables: {variable_filter}')
             global_variables = list(
                 filter(lambda v: any(map(lambda f: f in v, variable_filter)),
                        global_variables))
