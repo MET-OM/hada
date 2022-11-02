@@ -147,13 +147,18 @@ class Dataset:
         vo = np.full(shape, np.nan, dtype=block.dtype)
         vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
-        print(var.coords)
+        coords = var.coords
+        coords = dict(var.coords)
+        print(coords)
+        del coords['X']
+        del coords['Y']
+        print(coords)
 
-        vo = xr.DataArray(vo, [
-            ("time", var.time.data),
-            ("latitude", target.y),
-            ("longitude", target.x),
-        ],
+        coords['latitude'] = ("latitude", target.y)
+        coords['longitude'] = ("longitude", target.x)
+
+
+        vo = xr.DataArray(vo, coords=coords,
                           attrs=var.attrs,
                           name=var.name)
 
