@@ -17,9 +17,8 @@ logger = logging.getLogger(__name__)
 class Dataset:
     name: str
     url: str
-    variables: List[str]
+    variables: Dict
     ds: xr.Dataset
-    variable_map: Dict
 
     # name of x and y vars
     x_v: str
@@ -29,18 +28,10 @@ class Dataset:
     y: np.ndarray
     kdtree: Any
 
-    def __init__(self,
-                 name,
-                 url,
-                 x,
-                 y,
-                 global_variables,
-                 variable_map=None,
-                 variables=None):
+    def __init__(self, name, url, x, y, variables):
         self.name = name
         self.url = url
-        self.variables = variables if variables is not None else global_variables
-        self.variable_map = variable_map
+        self.variables = variables
         self.x_v = x
         self.y_v = y
 
@@ -157,10 +148,7 @@ class Dataset:
         coords['latitude'] = ("latitude", target.y)
         coords['longitude'] = ("longitude", target.x)
 
-
-        vo = xr.DataArray(vo, coords=coords,
-                          attrs=var.attrs,
-                          name=var.name)
+        vo = xr.DataArray(vo, coords=coords, attrs=var.attrs, name=var.name)
 
         # Positions in source grid
         # vo.attrs['x'] = target_x
@@ -198,19 +186,13 @@ class Dataset:
         Return variable name for input variable.
         """
         logger.debug(f'Looking for {var} in {self}')
-        if var in self.variables:
-            if var in self.variable_map:
-                logger.debug(f'Variable map: {var} -> {self.variable_map[var]}')
-                return self.variable_map[var]
-            else:
-                if self.ds.cf[var] is not None:
-                    return self.ds.cf[var].name
+        return self.variables.get(var, None)
 
 
 @dataclass
 class Sources:
     scalar_variables: List[str]
-    vector_variables: List[str]
+    vector_magnitude_variables: Dict
     datasets: List[Dataset]
 
     def find_dataset_for_var(self, var):
@@ -242,21 +224,29 @@ class Sources:
         logger.info(f'Loading sources from {file}')
         d = toml.load(open(file))
 
-        global_variables = d['scalar_variables'] + [
-            v for l in d['vector_variables'] for v in l
-        ]
+        datasets = []
+
+        for name, ds in d['datasets'].items():
+            if len(dataset_filter) > 0:
+                if not any(map(lambda f: f in name, dataset_filter)):
+                    break
+
+            dataset = Dataset(name=name, **ds)
+
+            datasets.append(dataset)
+
+        scalar_vars = d['scalar_variables']
+        vector_mag_vars = d['vector_magnitude_variables']
 
         if len(variable_filter) > 0:
-            logger.debug(f'Filtering variables: {variable_filter}')
-            global_variables = list(
-                filter(lambda v: any(map(lambda f: f in v, variable_filter)),
-                       global_variables))
+            logger.debug(f'Filtering scalar variables: {scalar_vars} | {variable_filter}')
+            scalar_vars = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), scalar_vars))
+            logger.debug(f'New scalar variables: {scalar_vars}.')
 
-        datasets = [
-            Dataset(name=name, **d, global_variables=global_variables)
-            for name, d in d['datasets'].items() if len(dataset_filter) == 0
-            or any(map(lambda f: f in name, dataset_filter))
-        ]
-        return Sources(scalar_variables=d['scalar_variables'],
-                       vector_variables=d['vector_variables'],
+            logger.debug(f'Filtering vector variables: {vector_mag_vars.keys()} | {variable_filter}')
+            vector_mag_vars = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), vector_mag_vars))
+            logger.debug(f'New vector variables: {vector_mag_vars}.')
+
+        return Sources(scalar_variables=scalar_vars,
+                       vector_magnitude_variables=vector_mag_vars,
                        datasets=datasets)

@@ -6,16 +6,27 @@
 # Sikt (0/1)*
 # Strømhastighet og strømretning*
 
-# The variables to read. Unless variables are specified for a reader, then all variables listed
-# here are acquired. Variable names should be specified in CF-standard names.
+# Få ut alle variabler i sammenstilt netcdf fra flere datakilder (Norkyst, MEPS, Barents)?
+# Vindhastighet (m/s)
+# Lufttemperatur (celsius grader)
+# Sjøtemperatur (celsius grader)
+# Signifikant bølgehøyde (m)
+# (Iskonsentrasjon (fraksjon))
+# Disse er sammenstilt til felles tidssteg for hver time i forcast perioden.
+# Projeksjon: endre til EPSG 3575
+# Bbox input angis i meter i denne epsg
+# Output netcdf blir i denne epsg
+# Output Grid er 800x800 meter cellestørrelse fast.
+
+# Scalar variables
 scalar_variables = [
-  "temperature",
-  "air_temperature",
+  'air_temperature',
+  'sea_temperature'
 ]
 
-vector_variables = [
-  ["x_wind", "y_wind"]
-]
+# Vector variables to read into a single magnitude scalar field.
+[vector_magnitude_variables]
+wind = ["x_wind", "y_wind"]
 
 # Prioritized list of datasets
 [datasets.norkyst]
@@ -23,12 +34,20 @@ url = "https://thredds.met.no/thredds/dodsC/sea/norkyst800m/1h/aggregate_be"
 x = 'X'
 y = 'Y'
 
+[datasets.norkyst.variables]
+sea_temperature = 'temperature'
+x_wind = 'Uwind'
+y_wind = 'Vwind'
+
 [datasets.meps]
 url = "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_latest.nc"
 x = 'x'
 y = 'y'
 
-variable_map = { x_wind_10m = 'x_wind', air_temperature = 'air_temperature_2m' }
+[datasets.meps.variables]
+air_temperature = 'air_temperature_2m'
+x_wind = 'x_wind_10m'
+y_wind = 'y_wind_10m'
 
 # https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be
 # https://thredds.met.no/thredds/dodsC/cmems/mywavewam3km/dataset-wam-arctic-1hr3km-be.ncml

@@ -4,6 +4,9 @@ import pyproj
 
 logger = logging.getLogger(__name__)
 
+def magnitude(u, v):
+    return np.sqrt(u**2 + v**2)
+
 def rotate_vectors(reader_x, reader_y, u_component, v_component,
                     proj_from, proj_to):
     """Rotate vectors from one crs to another."""

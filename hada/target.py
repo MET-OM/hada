@@ -6,7 +6,7 @@ import xarray as xr
 logger = logging.getLogger(__name__)
 
 class Target:
-    crs = pyproj.Proj('epsg:4326')
+    crs = pyproj.Proj('epsg:3575')
 
     proj_name = 'latlon_proj'
     grid_mapping_name = 'latitude_longitude'
