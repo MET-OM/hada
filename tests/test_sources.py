@@ -1,19 +1,30 @@
 import pytest
 from hada.sources import *
 
+
 def test_load_default_conf(sourcetoml):
     s = Sources.from_toml(sourcetoml)
     print(s)
 
-@pytest.mark.parametrize("var_filter, exp_s, exp_v", [(("wind",), 0, 1), (("wind", "air_temp"), 1, 1)])
+
+@pytest.mark.parametrize("var_filter, exp_s, exp_v",
+                         [(("wind", ), 0, 1), (("wind", "air_temp"), 1, 1)])
 def test_filter_var(sourcetoml, var_filter, exp_s, exp_v):
     s = Sources.from_toml(sourcetoml, variable_filter=var_filter)
     assert len(s.scalar_variables) == exp_s
     assert len(s.vector_magnitude_variables) == exp_v
 
 
+def test_filter_dataset(sourcetoml):
+    s = Sources.from_toml(sourcetoml, dataset_filter=('norkyst', ))
+    assert len(s.datasets) == 1
+
+
 def test_load_norkyst():
-    d = Dataset("norkyst", "https://thredds.met.no/thredds/dodsC/sea/norkyst800m/1h/aggregate_be", 'X', 'Y', ['x_wind'])
+    d = Dataset(
+        "norkyst",
+        "https://thredds.met.no/thredds/dodsC/sea/norkyst800m/1h/aggregate_be",
+        'X', 'Y', ['x_wind'])
     assert d.ds.rio.crs is not None
 
     print(d.ds)
@@ -29,6 +40,7 @@ def test_load_norkyst():
     # print(i)
     # print(d.x.shape)
     # np.testing.assert_array_equal(i, [len(d.x)-1, len(d.y)-1])
+
 
 def test_find_var(sourcetoml):
     s = Sources.from_toml(sourcetoml)
