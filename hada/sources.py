@@ -112,9 +112,16 @@ class Dataset:
         logger.info('Selecting time slice..')
         var = var.sel(time=slice(t0, t1))
 
+        ## Reduce and remove unwanted dimensions (selecting first item)
         if 'depth' in var.dims:
             logger.info('Selecting depth0..')
             var = var.sel(depth=0)
+
+        if 'height0' in var.dims:
+            var = var.isel(height0=0)
+
+        if 'ensemble_member' in var.dims:
+            var = var.isel(ensemble_member=0)
 
         # Extract block
         x0 = np.min(target_x[inbounds]) - self.dx
@@ -138,29 +145,25 @@ class Dataset:
         vo = np.full(shape, np.nan, dtype=block.dtype)
         vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
-        coords = var.coords
-        coords = dict(var.coords)
-        print(coords)
-        del coords['X']
-        del coords['Y']
-        print(coords)
+        # Construct new coordinates
+        coords = { 'time': var.time }
+        coords['Y'] = ("Y", target.y)
+        coords['X'] = ("X", target.x)
 
-        coords['latitude'] = ("latitude", target.y)
-        coords['longitude'] = ("longitude", target.x)
-
-        vo = xr.DataArray(vo, coords=coords, attrs=var.attrs, name=var.name)
+        vo = xr.DataArray(vo, dims=('time', 'Y', 'X'), coords=coords, attrs=var.attrs, name=var.name)
 
         # Positions in source grid
         # vo.attrs['x'] = target_x
         # vo.attrs['y'] = target_y
 
-        vo.latitude.attrs['units'] = 'degrees_north'
-        vo.latitude.attrs['standard_name'] = 'latitude'
-        vo.latitude.attrs['long_name'] = 'latitude'
+        # vo.latitude.attrs['units'] = 'degrees_north'
+        # vo.latitude.attrs['standard_name'] = 'latitude'
+        # vo.latitude.attrs['long_name'] = 'latitude'
 
-        vo.longitude.attrs['units'] = 'degrees_east'
-        vo.longitude.attrs['standard_name'] = 'longitude'
-        vo.longitude.attrs['long_name'] = 'longitude'
+        # vo.longitude.attrs['units'] = 'degrees_east'
+        # vo.longitude.attrs['standard_name'] = 'longitude'
+        # vo.longitude.attrs['long_name'] = 'longitude'
+
         vo.attrs['grid_mapping'] = target.proj_name
         vo.attrs['source'] = self.url
         vo.attrs['source_name'] = self.name
@@ -212,10 +215,11 @@ class Sources:
         """
         for d in self.datasets:
             logger.debug(f'Looking for {var1} and {var2} in {d}')
-            if var1 in d.variables and var2 in d.variables:
-                if d.ds.cf[[var1]] is not None and d.ds.cf[[var2]] is not None:
-                    print(d.ds.cf[[var1]])
-                    return (d, d.ds.cf[[var1]], d.ds.cf[[var2]])
+            var1 = d.get_var(var1)
+            var2 = d.get_var(var2)
+
+            if var1 is not None and var2 is not None:
+                return (d, d.ds[var1], d.ds[var2])
 
         return (None, None, None)
 
@@ -244,7 +248,13 @@ class Sources:
             logger.debug(f'New scalar variables: {scalar_vars}.')
 
             logger.debug(f'Filtering vector variables: {vector_mag_vars.keys()} | {variable_filter}')
-            vector_mag_vars = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), vector_mag_vars))
+
+            fvector_mag_vars = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), vector_mag_vars))
+            new_v_m = dict()
+            for k in fvector_mag_vars:
+                new_v_m[k] = vector_mag_vars[k]
+            vector_mag_vars = new_v_m
+
             logger.debug(f'New vector variables: {vector_mag_vars}.')
 
         return Sources(scalar_variables=scalar_vars,

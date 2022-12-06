@@ -52,11 +52,12 @@ def hada(log_level, sources, bbox, nx, ny, t0, t1, dataset_filter, variable_filt
 
             # Acquire variables on target grid
             vo = d.regrid(v, target, t0, t1)
-            ds[vo.name] = vo
+            ds[var] = vo
         else:
             logger.error(f'No dataset found for variable {var}.')
 
-    for vvar in sources.vector_variables:
+    for var, vvar in sources.vector_magnitude_variables.items():
+        assert len(vvar) == 2, "Vector variables can only contain two components"
         varx = vvar[0]
         vary = vvar[1]
         logger.info(f'Searching for variable {varx},{vary}')
@@ -69,10 +70,8 @@ def hada(log_level, sources, bbox, nx, ny, t0, t1, dataset_filter, variable_filt
             vox = d.regrid(vx, target, t0, t1)
             voy = d.regrid(vy, target, t0, t1)
 
-            vox, voy = d.rotate_vectors(vox, voy, target)
-
-            ds[vox.name] = vox
-            ds[voy.name] = voy
+            vox.values = vector.magnitude(vox.values, voy.values)
+            ds[var] = vox
         else:
             logger.error(f'No dataset found for variable {varx},{vary}.')
 
