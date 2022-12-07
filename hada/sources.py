@@ -160,7 +160,7 @@ class Dataset:
         vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
         # Construct new coordinates
-        coords = {'time': var.time}
+        coords = {'time': time}
         coords['Y'] = ("Y", target.y)
         coords['X'] = ("X", target.x)
 

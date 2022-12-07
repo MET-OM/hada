@@ -92,8 +92,8 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
             logger.info(f'Extracting {varx} and {vary} from {d}')
 
             # Acquire variables on target grid
-            vox = d.regrid(vx, target, t0, t1)
-            voy = d.regrid(vy, target, t0, t1)
+            vox = d.regrid(vx, target, time)
+            voy = d.regrid(vy, target, time)
 
             vox.values = vector.magnitude(vox.values, voy.values)
             ds[var] = vox

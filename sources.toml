@@ -7,22 +7,23 @@
 # Strømhastighet og strømretning*
 
 # Få ut alle variabler i sammenstilt netcdf fra flere datakilder (Norkyst, MEPS, Barents)?
-# Vindhastighet (m/s)
-# Lufttemperatur (celsius grader)
-# Sjøtemperatur (celsius grader)
-# Signifikant bølgehøyde (m)
-# (Iskonsentrasjon (fraksjon))
-# Disse er sammenstilt til felles tidssteg for hver time i forcast perioden.
-# Projeksjon: endre til EPSG 3575
-# Bbox input angis i meter i denne epsg
-# Output netcdf blir i denne epsg
-# Output Grid er 800x800 meter cellestørrelse fast.
+# [X] Vindhastighet (m/s)
+# [X] Lufttemperatur (celsius grader)
+# [X] Sjøtemperatur (celsius grader)
+# [X] Signifikant bølgehøyde (m)
+# [/] (Iskonsentrasjon (fraksjon))
+# [X] Disse er sammenstilt til felles tidssteg for hver time i forcast perioden.
+# [X] Projeksjon: endre til EPSG 3575
+# [X] Bbox input angis i meter i denne epsg
+# [X] XOutput netcdf blir i denne epsg
+# [X] Output Grid er 800x800 meter cellestørrelse fast.
 
 # Scalar variables
 scalar_variables = [
   'air_temperature',
   'sea_temperature',
-  'ice_concentration',
+  # 'ice_concentration',
+  'significant_wave_height',
 ]
 
 # Vector variables to read into a single magnitude scalar field.
@@ -57,6 +58,14 @@ y = 'Y'
 
 [datasets.barents.variables]
 ice_concentration = 'ice_concentration'
+
+[datasets.mywavewam4]
+url = 'https://thredds.met.no/thredds/dodsC/sea/mywavewam4/mywavewam4_be'
+x = 'rlon'
+y = 'rlat'
+
+[datasets.mywavewam4.variables]
+significant_wave_height = 'hs'
 
 # https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be
 # https://thredds.met.no/thredds/dodsC/cmems/mywavewam3km/dataset-wam-arctic-1hr3km-be.ncml
