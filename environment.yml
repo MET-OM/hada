@@ -13,3 +13,6 @@ dependencies:
   - pytest
   - toml
   - pyproj
+  - matplotlib
+  - cartopy
+  - shapely
