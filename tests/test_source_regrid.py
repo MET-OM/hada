@@ -1,6 +1,7 @@
 import pytest
 from hada.sources import *
 from hada.target import Target
+import pandas as pd
 
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -21,7 +22,7 @@ def test_norkyst_transform_points(tmpdir):
     ## Try to get some values and check if they end up where they should.
     t = Target.from_lonlat(5, 10, 55, 60, 100, 100, tmpdir)
 
-    vo = d.regrid(d.ds['Uwind'], t, "2022-11-06T02:00:00", "2022-11-06T02:00:00")
+    vo = d.regrid(d.ds['Uwind'], t, pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
 
     ncrs = ccrs.Stereographic(true_scale_latitude=60,

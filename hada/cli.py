@@ -3,6 +3,8 @@ import coloredlogs
 import click
 from datetime import datetime, timedelta
 import xarray as xr
+import pandas as pd
+import numpy as np
 
 from .sources import Sources
 from .target import Target
@@ -13,16 +15,16 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option('--log-level', default='info', help='Set log level')
 @click.option('--sources', default='sources.toml', type=click.Path())
-@click.option('--bbox-deg', default="5,10,60,65", help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
+@click.option('--bbox-deg', help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
 @click.option('--bbox-m', help='Bounding box in meters on EPSG:3575 (xmin, xmax, ymin, ymax)')
-@click.option('--nx', default=100, help='Resolution in x (longitude)')
-@click.option('--ny', default=150, help='Resolution in y (latitude)')
+@click.option('--dx', default=800., help='Grid size in x')
+@click.option('--dy', default=800., help='Grid size in y')
 @click.option('--from', 't0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
 @click.option('--to', 't1', type=click.DateTime(), help='UTC date-time end (default: now)')
 @click.option('-d', '--dataset-filter', multiple=True, help='Only include datasets containing string')
 @click.option('-v', '--variable-filter', multiple=True, help='Only include variables containing string')
 @click.option('--output', type=click.Path(), help='Output file')
-def hada(log_level, sources, bbox_deg, bbox_m, nx, ny, t0, t1, dataset_filter, variable_filter, output):
+def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, variable_filter, output):
     coloredlogs.install(level=log_level)
 
     if t0 is None:
@@ -33,9 +35,7 @@ def hada(log_level, sources, bbox_deg, bbox_m, nx, ny, t0, t1, dataset_filter, v
 
     logger.info(f"hada: {t0} -> {t1}")
 
-    # Load datasets
-    sources = Sources.from_toml(sources, dataset_filter, variable_filter)
-    logger.debug(f'sources: {sources}')
+    time = pd.date_range(t0, t1, freq='1H')
 
     # Compute target grid
     if bbox_deg is not None and bbox_m is not None:
@@ -45,11 +45,26 @@ def hada(log_level, sources, bbox_deg, bbox_m, nx, ny, t0, t1, dataset_filter, v
     if bbox_m:
         bbox_m = list(map(lambda x: float(x.strip()), bbox_m.split(",")))
         assert len(bbox_m) == 4, "Bounding box should consit of 4 comma-separated floats"
+
+        nx = np.max((int((bbox_m[1] - bbox_m[0]) / dx), 1))
+        ny = np.max((int((bbox_m[3] - bbox_m[2]) / dy), 1))
+
         target = Target(bbox_m[0], bbox_m[1], bbox_m[2], bbox_m[3], nx, ny, output)
     else:
+        if bbox_deg is None:
+            bbox_deg = "5,10,60,65"
+
         bbox_d = list(map(lambda x: float(x.strip()), bbox_deg.split(",")))
         assert len(bbox_d) == 4, "Bounding box should consit of 4 comma-separated floats"
+
+        nx = np.max((int((bbox_d[1] - bbox_d[0]) / dx), 1))
+        ny = np.max((int((bbox_d[3] - bbox_d[2]) / dy), 1))
+
         target = Target.from_lonlat(bbox_d[0], bbox_d[1], bbox_d[2], bbox_d[3], nx, ny, output)
+
+    # Load datasets
+    sources = Sources.from_toml(sources, dataset_filter, variable_filter)
+    logger.debug(f'sources: {sources}')
 
     ds = xr.Dataset()
 
@@ -61,7 +76,7 @@ def hada(log_level, sources, bbox_deg, bbox_m, nx, ny, t0, t1, dataset_filter, v
             logger.info(f'Extracting {var} from {d}')
 
             # Acquire variables on target grid
-            vo = d.regrid(v, target, t0, t1)
+            vo = d.regrid(v, target, time)
             ds[var] = vo
         else:
             logger.error(f'No dataset found for variable {var}.')

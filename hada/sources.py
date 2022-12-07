@@ -57,14 +57,19 @@ class Dataset:
         self.xmin, self.xmax = self.x.min(), self.x.max()
         self.ymin, self.ymax = self.y.min(), self.y.max()
 
-        assert all(np.diff(self.x) - self.dx == 0)
-        assert all(np.diff(self.y) - self.dy == 0)
+        if not all(np.diff(self.x) - self.dx == 0):
+            logger.error(f'X coordinate not monotonic: {np.max(np.diff(self.x)-self.dx)}')
+
+        if not all(np.diff(self.y) - self.dy == 0):
+            logger.error(f'Y coordinate not monotonic: {np.max(np.diff(self.y)-self.dy)}')
 
         logger.debug(
             f'x: {self.x.shape} / {self.dx}, y: {self.y.shape} / {self.dy}')
         logger.debug(
             f'x: {self.x.min()} -> {self.x.max()}, y: {self.y.min()} -> {self.y.max()}'
         )
+
+        logger.info(f'time: {self.ds.time.values[0]} -> {self.ds.time.values[-1]}')
 
         self.crs = self.ds.rio.crs
         # self.crs = pyproj.Proj(
@@ -103,21 +108,23 @@ class Dataset:
         inbounds = (target_x >= self.xmin) & (target_x < self.xmax) & (
             target_y >= self.ymin) & (target_y < self.ymax)
 
-        if not any(inbounds.ravel()):
-            logger.warning('Target is outside the domain of this reader')
-
         return target_x, target_y, inbounds
 
-    def regrid(self, var, target, t0, t1):
+    def regrid(self, var, target, time):
         """
         Return values for the target grid.
         """
-        logger.info(f'Regridding {var} between {t0} and {t1}')
+        time = np.atleast_1d(time)
+        logger.info(f'Regridding {var} between {np.min(time)} and {np.max(time)}')
 
         target_x, target_y, inbounds = self.__calculate_grid__(target)
 
+        if not any(inbounds.ravel()):
+            logger.warning('Target is outside the domain of this reader')
+            return None
+
         logger.info('Selecting time slice..')
-        var = var.sel(time=slice(t0, t1))
+        var = var.sel(time=time, method='nearest')
 
         ## Reduce and remove unwanted dimensions (selecting first item)
         if 'depth' in var.dims:
@@ -244,7 +251,7 @@ class Sources:
         for name, ds in d['datasets'].items():
             if len(dataset_filter) > 0:
                 if not any(map(lambda f: f in name, dataset_filter)):
-                    break
+                    continue
 
             dataset = Dataset(name=name, **ds)
 

@@ -1,5 +1,8 @@
 import pytest
 from hada.sources import *
+import xarray as xr
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 def test_load_default_conf(sourcetoml):
@@ -51,3 +54,30 @@ def test_find_var(sourcetoml):
 
     _, v = s.find_dataset_for_var('gibberish')
     assert v is None
+
+
+def test_slice_barents():
+    d = xr.decode_cf(
+        xr.open_dataset(
+            'https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be',
+            decode_coords='all'))
+
+    i = d['ice_concentration']
+    # i = i.isel(time=slice(3000, -24*3))
+
+    print(i.time.isel(time=slice(-30, None)))
+    ii = np.argmax(
+        i.time.values > pd.to_datetime("2022-12-01T00:00:00").to_datetime64())
+    print(ii)
+    print(i.isel(time=ii))
+
+    tr = pd.date_range("2022-12-01T00:00:00", "2022-12-06T00:00:00", freq='1H')
+    print(tr)
+    # ic = i.sel(time=tr, method='nearest')
+
+    time = i.time.values
+    utime = np.unique(time)
+    print(len(time), len(utime))
+
+    # i = i.sel(time="2022-12-01T00:00:00", method='nearest')
+    # print(i)
