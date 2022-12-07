@@ -1,10 +1,3 @@
-# Vindhastighet (m/s)
-# Lufttemperatur (celsius grader)
-# Sjøtemperatur (celsius grader)
-# Signifikant bølgehøyde (m)
-# Iskonsentrasjon (%)
-# Sikt (0/1)*
-# Strømhastighet og strømretning*
 
 # Få ut alle variabler i sammenstilt netcdf fra flere datakilder (Norkyst, MEPS, Barents)?
 # [X] Vindhastighet (m/s)
@@ -12,6 +5,8 @@
 # [X] Sjøtemperatur (celsius grader)
 # [X] Signifikant bølgehøyde (m)
 # [/] (Iskonsentrasjon (fraksjon))
+# [ ] Sikt (0/1)*
+# [X] Strømhastighet
 # [X] Disse er sammenstilt til felles tidssteg for hver time i forcast perioden.
 # [X] Projeksjon: endre til EPSG 3575
 # [X] Bbox input angis i meter i denne epsg
@@ -29,6 +24,7 @@ scalar_variables = [
 # Vector variables to read into a single magnitude scalar field.
 [vector_magnitude_variables]
 wind = ["x_wind", "y_wind"]
+current = ["x_sea_water", "y_sea_water"]
 
 # Prioritized list of datasets
 [datasets.norkyst]
@@ -40,6 +36,8 @@ y = 'Y'
 sea_temperature = 'temperature'
 x_wind = 'Uwind'
 y_wind = 'Vwind'
+x_sea_water = 'u'
+y_sea_water = 'v'
 
 [datasets.meps]
 url = "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_latest.nc"
