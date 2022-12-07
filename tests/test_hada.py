@@ -10,5 +10,5 @@ def test_run(sourcetoml, tmpdir, runner):
 def test_custom_bbox(sourcetoml, tmpdir, runner):
     with runner.isolated_filesystem(temp_dir=tmpdir) as td:
         td = Path(td)
-        r = runner.invoke(hada, ['--sources', str(sourcetoml), '--output', td / 'test.nc', '--bbox', '6,7,67,68'])
+        r = runner.invoke(hada, ['--sources', str(sourcetoml), '--output', td / 'test.nc', '--bbox-deg', '6,7,67,68'])
         assert r.exit_code == 0

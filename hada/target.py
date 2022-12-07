@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 class Target:
-    crs = pyproj.CRS.from_epsg(3575)
+    epsg = 3575
+    crs = pyproj.CRS.from_epsg(epsg)
 
     proj_name = 'target_proj'
     grid_mapping_name = 'target_proj_grid'
@@ -45,6 +46,16 @@ class Target:
         logger.info(
             f'Target grid set up: x={xmin, xmax}, y={ymin, ymax}, resolution: {nx} x {ny}, output: {output}'
         )
+
+    @property
+    def bbox(self):
+        from shapely.geometry import box
+        return box(self.xmin, self.ymin, self.xmax, self.ymax)
+
+    @property
+    def cartopy_crs(self):
+        import cartopy.crs as ccrs
+        return ccrs.epsg(self.epsg)
 
     @staticmethod
     def from_lonlat(lonmin, lonmax, latmin, latmax, *args, **kwargs):
