@@ -66,7 +66,7 @@ class Dataset:
             f'x: {self.x.min()} -> {self.x.max()}, y: {self.y.min()} -> {self.y.max()}'
         )
 
-        self.crs = pyproj.Proj(self.ds.rio.crs.to_proj4())
+        self.crs = self.ds.rio.crs
         # self.crs = pyproj.Proj(
         #     '+proj=stere +ellps=WGS84 +lat_0=90.0 +lat_ts=60.0 +x_0=3192800 +y_0=1784000 +lon_0=70'
         # )
@@ -81,14 +81,21 @@ class Dataset:
 
         # Calculating the location of the target grid cells
         # in this datasets coordinate system.
+
         # tf = pyproj.Transformer.from_proj(target.crs, self.crs)
 
         # self.target_x, self.target_y = tf.transform(
         #     target.xx.ravel(), target.yy.ravel())
 
-        target_x, target_y = self.crs(target.xx.ravel(),
-                                      target.yy.ravel(),
-                                      inverse=False)
+        # target_x, target_y = self.crs(target.xx.ravel(),
+        #                               target.yy.ravel(),
+        #                               inverse=False)
+
+        target_x, target_y = target.itransform(self.crs, target.xx.ravel(),
+                                               target.yy.ravel())
+
+        assert len(target_x) > 0
+
         target_x.shape = target.xx.shape
         target_y.shape = target.yy.shape
 
@@ -146,11 +153,15 @@ class Dataset:
         vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
         # Construct new coordinates
-        coords = { 'time': var.time }
+        coords = {'time': var.time}
         coords['Y'] = ("Y", target.y)
         coords['X'] = ("X", target.x)
 
-        vo = xr.DataArray(vo, dims=('time', 'Y', 'X'), coords=coords, attrs=var.attrs, name=var.name)
+        vo = xr.DataArray(vo,
+                          dims=('time', 'Y', 'X'),
+                          coords=coords,
+                          attrs=var.attrs,
+                          name=var.name)
 
         # Positions in source grid
         # vo.attrs['x'] = target_x
@@ -243,13 +254,21 @@ class Sources:
         vector_mag_vars = d['vector_magnitude_variables']
 
         if len(variable_filter) > 0:
-            logger.debug(f'Filtering scalar variables: {scalar_vars} | {variable_filter}')
-            scalar_vars = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), scalar_vars))
+            logger.debug(
+                f'Filtering scalar variables: {scalar_vars} | {variable_filter}'
+            )
+            scalar_vars = list(
+                filter(lambda v: any(map(lambda f: f in v, variable_filter)),
+                       scalar_vars))
             logger.debug(f'New scalar variables: {scalar_vars}.')
 
-            logger.debug(f'Filtering vector variables: {vector_mag_vars.keys()} | {variable_filter}')
+            logger.debug(
+                f'Filtering vector variables: {vector_mag_vars.keys()} | {variable_filter}'
+            )
 
-            fvector_mag_vars = list(filter(lambda v: any(map(lambda f: f in v, variable_filter)), vector_mag_vars))
+            fvector_mag_vars = list(
+                filter(lambda v: any(map(lambda f: f in v, variable_filter)),
+                       vector_mag_vars))
             new_v_m = dict()
             for k in fvector_mag_vars:
                 new_v_m[k] = vector_mag_vars[k]

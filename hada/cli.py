@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option('--log-level', default='info', help='Set log level')
 @click.option('--sources', default='sources.toml', type=click.Path())
-@click.option('--bbox', default="5,10,60,65", help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
+@click.option('--bbox-deg', default="5,10,60,65", help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
+@click.option('--bbox-m', help='Bounding box in meters on EPSG:3575 (xmin, xmax, ymin, ymax)')
 @click.option('--nx', default=100, help='Resolution in x (longitude)')
 @click.option('--ny', default=150, help='Resolution in y (latitude)')
 @click.option('--from', 't0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 @click.option('-d', '--dataset-filter', multiple=True, help='Only include datasets containing string')
 @click.option('-v', '--variable-filter', multiple=True, help='Only include variables containing string')
 @click.option('--output', type=click.Path(), help='Output file')
-def hada(log_level, sources, bbox, nx, ny, t0, t1, dataset_filter, variable_filter, output):
+def hada(log_level, sources, bbox_deg, bbox_m, nx, ny, t0, t1, dataset_filter, variable_filter, output):
     coloredlogs.install(level=log_level)
 
     if t0 is None:
@@ -31,15 +32,24 @@ def hada(log_level, sources, bbox, nx, ny, t0, t1, dataset_filter, variable_filt
         t1 = datetime.utcnow()
 
     logger.info(f"hada: {t0} -> {t1}")
-    bbox = list(map(lambda x: float(x.strip()), bbox.split(",")))
-    assert len(bbox) == 4, "Bounding box should consit of 4 comma-separated floats"
 
     # Load datasets
     sources = Sources.from_toml(sources, dataset_filter, variable_filter)
     logger.debug(f'sources: {sources}')
 
     # Compute target grid
-    target = Target(bbox[0], bbox[1], bbox[2], bbox[3], nx, ny, output)
+    if bbox_deg is not None and bbox_m is not None:
+        logger.error('Only one of bbox_deg and bbox_m can be specified at the same time.')
+        return 1
+
+    if bbox_m:
+        bbox_m = list(map(lambda x: float(x.strip()), bbox_m.split(",")))
+        assert len(bbox_m) == 4, "Bounding box should consit of 4 comma-separated floats"
+        target = Target(bbox_m[0], bbox_m[1], bbox_m[2], bbox_m[3], nx, ny, output)
+    else:
+        bbox_d = list(map(lambda x: float(x.strip()), bbox_deg.split(",")))
+        assert len(bbox_d) == 4, "Bounding box should consit of 4 comma-separated floats"
+        target = Target.from_lonlat(bbox_d[0], bbox_d[1], bbox_d[2], bbox_d[3], nx, ny, output)
 
     ds = xr.Dataset()
 
