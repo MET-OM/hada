@@ -134,6 +134,9 @@ class Dataset:
         if 'height0' in var.dims:
             var = var.isel(height0=0)
 
+        if 'height1' in var.dims:
+            var = var.isel(height1=0)
+
         if 'ensemble_member' in var.dims:
             var = var.isel(ensemble_member=0)
 
@@ -213,6 +216,7 @@ class Dataset:
 @dataclass
 class Sources:
     scalar_variables: List[str]
+    derived_variables: Dict
     vector_magnitude_variables: Dict
     datasets: List[Dataset]
 
@@ -258,6 +262,7 @@ class Sources:
             datasets.append(dataset)
 
         scalar_vars = d['scalar_variables']
+        derived_vars = d['derived_variables']
         vector_mag_vars = d['vector_magnitude_variables']
 
         if len(variable_filter) > 0:
@@ -283,6 +288,21 @@ class Sources:
 
             logger.debug(f'New vector variables: {vector_mag_vars}.')
 
+            logger.debug(
+                f'Filtering derived variables: {derived_vars.keys()} | {variable_filter}'
+            )
+
+            fderived_vars = list(
+                filter(lambda v: any(map(lambda f: f in v, variable_filter)),
+                       derived_vars))
+            new_d_v = dict()
+            for k in fderived_vars:
+                new_d_v[k] = derived_vars[k]
+            derived_vars = new_d_v
+
+            logger.debug(f'New derived variables: {derived_vars}.')
+
         return Sources(scalar_variables=scalar_vars,
                        vector_magnitude_variables=vector_mag_vars,
+                       derived_variables=derived_vars,
                        datasets=datasets)

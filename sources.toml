@@ -1,11 +1,10 @@
-
 # Få ut alle variabler i sammenstilt netcdf fra flere datakilder (Norkyst, MEPS, Barents)?
 # [X] Vindhastighet (m/s)
 # [X] Lufttemperatur (celsius grader)
 # [X] Sjøtemperatur (celsius grader)
 # [X] Signifikant bølgehøyde (m)
 # [X] (Iskonsentrasjon (fraksjon))
-# [ ] Sikt (0/1)*
+# [X] Sikt (0/1)*
 # [X] Strømhastighet
 # [X] Disse er sammenstilt til felles tidssteg for hver time i forcast perioden.
 # [X] Projeksjon: endre til EPSG 3575
@@ -20,6 +19,10 @@ scalar_variables = [
   'ice_concentration',
   'significant_wave_height',
 ]
+
+# Argument order must match input to calculating function.
+[derived_variables]
+horizontal_visibility = [ 'relative_humidity', 'fog' ]
 
 # Vector variables to read into a single magnitude scalar field.
 [vector_magnitude_variables]
@@ -48,6 +51,8 @@ y = 'y'
 air_temperature = 'air_temperature_2m'
 x_wind = 'x_wind_10m'
 y_wind = 'y_wind_10m'
+relative_humidity = 'relative_humidity_2m'
+fog = 'fog_area_fraction'
 
 [datasets.barents]
 url = "https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be"

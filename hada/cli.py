@@ -9,6 +9,7 @@ import numpy as np
 from .sources import Sources
 from .target import Target
 from . import vector
+from . import derive
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +103,32 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
                 ds[var] = vox
         else:
             logger.error(f'No dataset found for variable {varx},{vary}.')
+
+    for var, vvar in sources.derived_variables.items():
+        logger.info(f'Searching for variables {vvar}')
+
+        vos = []
+
+        for vn in vvar:
+            (d, v) = sources.find_dataset_for_var(vn)
+
+            if v is not None:
+                logger.info(f'Extracting {var} from {d}')
+                vo = d.regrid(v, target, time)
+                if vo is not None:
+                    vos.append(vo)
+                    continue
+
+            logger.error(f'Could not find dataset for {vn}.')
+            break
+
+        if len(vos) != len(vvar):
+            logger.error(f'Could not find all necessary variables for {var}, skipping.')
+            continue
+        else:
+            vo = derive.derive(var, *vos)
+            if vo is not None:
+                ds[var] = vo
 
     logger.info('Merging variables into new dataset..')
     ds[target.proj_name] = target.proj_var
