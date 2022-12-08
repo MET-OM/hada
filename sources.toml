@@ -42,18 +42,6 @@ y_wind = 'Vwind'
 x_sea_water = 'u'
 y_sea_water = 'v'
 
-[datasets.meps]
-url = "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_latest.nc"
-x = 'x'
-y = 'y'
-
-[datasets.meps.variables]
-air_temperature = 'air_temperature_2m'
-x_wind = 'x_wind_10m'
-y_wind = 'y_wind_10m'
-relative_humidity = 'relative_humidity_2m'
-fog = 'fog_area_fraction'
-
 [datasets.barents]
 url = "https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be"
 x = 'X'
@@ -69,5 +57,17 @@ y = 'rlat'
 
 [datasets.mywavewam4.variables]
 significant_wave_height = 'hs'
+
+[datasets.meps]
+url = "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_latest.nc"
+x = 'x'
+y = 'y'
+
+[datasets.meps.variables]
+air_temperature = 'air_temperature_2m'
+x_wind = 'x_wind_10m'
+y_wind = 'y_wind_10m'
+relative_humidity = 'relative_humidity_2m'
+fog = 'fog_area_fraction'
 
 # https://thredds.met.no/thredds/dodsC/cmems/topaz6/dataset-topaz6-arc-15min-3km-be.ncml

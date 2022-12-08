@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 @click.option('--sources', default='sources.toml', type=click.Path())
 @click.option('--bbox-deg', help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
 @click.option('--bbox-m', help='Bounding box in meters on EPSG:3575 (xmin, xmax, ymin, ymax)')
-@click.option('--dx', default=800., help='Grid size in x')
-@click.option('--dy', default=800., help='Grid size in y')
+@click.option('--dx', help='Grid size in x direction')
+@click.option('--dy', help='Grid size in y direction')
 @click.option('--from', 't0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
 @click.option('--to', 't1', type=click.DateTime(), help='UTC date-time end (default: now)')
 @click.option('-d', '--dataset-filter', multiple=True, help='Only include datasets containing string')
@@ -47,6 +47,12 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
         bbox_m = list(map(lambda x: float(x.strip()), bbox_m.split(",")))
         assert len(bbox_m) == 4, "Bounding box should consit of 4 comma-separated floats"
 
+        if dx is None:
+            dx = 800
+
+        if dy is None:
+            dy = 800
+
         nx = np.max((int((bbox_m[1] - bbox_m[0]) / dx), 1))
         ny = np.max((int((bbox_m[3] - bbox_m[2]) / dy), 1))
 
@@ -54,6 +60,12 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
     else:
         if bbox_deg is None:
             bbox_deg = "5,10,60,65"
+
+        if dx is None:
+            dx = 0.01
+
+        if dy is None:
+            dy = 0.01
 
         bbox_d = list(map(lambda x: float(x.strip()), bbox_deg.split(",")))
         assert len(bbox_d) == 4, "Bounding box should consit of 4 comma-separated floats"
@@ -71,16 +83,10 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
 
     for var in sources.scalar_variables:
         logger.info(f'Searching for variable {var}')
-        (d, v) = sources.find_dataset_for_var(var)
 
-        if v is not None:
-            logger.info(f'Extracting {var} from {d}')
-
-            # Acquire variables on target grid
-            vo = d.regrid(v, target, time)
-
-            if vo is not None:  # None if outside domain
-                ds[var] = vo
+        vo = sources.regrid(var, target, time)
+        if vo is not None:  # None if outside domain
+            ds[var] = vo
         else:
             logger.error(f'No dataset found for variable {var}.')
 
@@ -89,18 +95,14 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
         varx = vvar[0]
         vary = vvar[1]
         logger.info(f'Searching for variable {varx},{vary}')
-        (d, vx, vy) = sources.find_dataset_for_var_pair(varx, vary)
 
-        if vx is not None:
-            logger.info(f'Extracting {varx} and {vary} from {d}')
+        # Acquire variables on target grid
+        vox = sources.regrid(varx, target, time)
+        voy = sources.regrid(vary, target, time)
 
-            # Acquire variables on target grid
-            vox = d.regrid(vx, target, time)
-            voy = d.regrid(vy, target, time)
-
-            if vox is not None and voy is not None:  # None if outside domain.
-                vox.values = vector.magnitude(vox.values, voy.values)
-                ds[var] = vox
+        if vox is not None and voy is not None:  # None if outside domain.
+            vox.values = vector.magnitude(vox.values, voy.values)
+            ds[var] = vox
         else:
             logger.error(f'No dataset found for variable {varx},{vary}.')
 
@@ -110,14 +112,10 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
         vos = []
 
         for vn in vvar:
-            (d, v) = sources.find_dataset_for_var(vn)
-
-            if v is not None:
-                logger.info(f'Extracting {var} from {d}')
-                vo = d.regrid(v, target, time)
-                if vo is not None:
-                    vos.append(vo)
-                    continue
+            vo = sources.regrid(vn, target, time)
+            if vo is not None:
+                vos.append(vo)
+                continue
 
             logger.error(f'Could not find dataset for {vn}.')
             break

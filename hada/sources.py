@@ -137,6 +137,9 @@ class Dataset:
         if 'height1' in var.dims:
             var = var.isel(height1=0)
 
+        if 'height2' in var.dims:
+            var = var.isel(height2=0)
+
         if 'ensemble_member' in var.dims:
             var = var.isel(ensemble_member=0)
 
@@ -244,6 +247,37 @@ class Sources:
                 return (d, d.ds[var1], d.ds[var2])
 
         return (None, None, None)
+
+    def regrid(self, var, target, time):
+        """
+        Search through datasets and try to cover the entire target grid with data.
+        """
+        vo = None
+
+        for d in self.datasets:
+            v = d.get_var(var)
+
+            if v is not None:
+                logger.info(f'Found {var} in {d}..')
+                v = d.ds[v]
+
+                vod = d.regrid(v, target, time)
+                if vod is not None:
+                    if vo is None:
+                        vo = vod
+                    else:
+                        assert vo.shape == vod.shape
+                        td = np.isnan(vo.values) & ~np.isnan(vod.values)
+                        logger.info(f'Merging {len(td[td])} values into output variable: {vo.shape}')
+                        vo.values[td] = vod.values[td]
+                else:
+                    logger.debug(f'{var} completely out of domain of {d}.')
+
+            if vo is not None and not np.isnan(vo).any():
+                logger.debug(f'{var} completely covered.')
+                break
+
+        return vo
 
     @staticmethod
     def from_toml(file, dataset_filter=(), variable_filter=()):

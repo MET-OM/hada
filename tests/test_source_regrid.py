@@ -137,3 +137,28 @@ def test_mywave_transform_points(tmpdir, plot):
 
     if plot:
         plt.show()
+
+
+def test_regrid_wind_fallback(sourcetoml, tmpdir):
+    t = Target.from_lonlat(5, 10, 55, 60, 100, 100, tmpdir)
+    s = Sources.from_toml(sourcetoml,
+                          dataset_filter=(
+                              'norkyst',
+                              'meps',
+                          ),
+                          variable_filter=('wind', ))
+
+    time = pd.date_range("2022-12-07", "2022-12-08", freq="1H")
+
+    nk = s.datasets[0]
+    assert nk.name == 'norkyst'
+
+    x_wind = nk.regrid(nk.ds['Uwind'], t, time)
+    assert np.isnan(x_wind).any()
+    assert not np.isnan(x_wind).all()
+
+    x_wind = s.regrid('x_wind', t, time)
+    y_wind = s.regrid('y_wind', t, time)
+
+    assert not np.isnan(x_wind).any()
+    assert not np.isnan(y_wind).any()
