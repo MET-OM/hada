@@ -4,11 +4,6 @@ import xarray as xr
 
 from hada.derive import *
 
-def test_horizontal_vis():
-    rh = np.linspace(0, 1)
-    fog = np.linspace(0, 1)
-    vv = hor_vis(rh, fog)
-
 def test_horizontal_vis_meps():
     ds = xr.open_dataset("https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_latest.nc")
 
