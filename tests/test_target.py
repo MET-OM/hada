@@ -58,7 +58,7 @@ def test_transform_from_latlon():
 
     x, y = Target.transform(crs, 5, 55)
     print(x, y)
-    assert (x, y) == (-335060.5808799216, -3829759.9640511023)
+    assert (x, y) == approx((-335060.5808799216, -3829759.9640511023))
 
     xx, yy = Target.itransform(crs, x, y)
     assert (xx, yy) == approx((5., 55.))
@@ -66,12 +66,12 @@ def test_transform_from_latlon():
     # test target proj bounds
     x, y = Target.transform(crs, -180, 45)
     print(x, y)
-    assert (x, y) == (849024.0785366141, 4815054.821022379)
+    assert (x, y) == approx((849024.0785366141, 4815054.821022379))
     xx, yy = Target.itransform(crs, x, y)
     assert (Target.modulate_longitude(xx), yy) == approx((-180., 45))
 
     x, y = Target.transform(crs, 180, 90)
     print(x, y)
-    assert (x, y) == (0., 0.)
+    assert (x, y) == approx((0., 0.))
     # xx, yy = Target.itransform(crs, x, y) # doesn't work, NP singularity?
     # assert (xx, yy) == approx((180., 90))
