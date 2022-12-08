@@ -47,6 +47,7 @@ def test_norkyst_transform_points(tmpdir, plot):
     if plot:
         plt.show()
 
+
 def test_barents_transform_points(tmpdir, plot):
     d = Dataset(
         "barents",
@@ -63,13 +64,15 @@ def test_barents_transform_points(tmpdir, plot):
     tbox = t.bbox
     t_crs = t.cartopy_crs
 
-    vo = d.regrid(d.ds['ice_concentration'], t, pd.to_datetime("2022-11-06T02:00:00"))
+    vo = d.regrid(d.ds['ice_concentration'], t,
+                  pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
 
-    bcrs = ccrs.LambertConformal(central_longitude=-25,
-                                 central_latitude=77.5,
-                                 standard_parallels=(77.5, 77.5),)
-
+    bcrs = ccrs.LambertConformal(
+        central_longitude=-25,
+        central_latitude=77.5,
+        standard_parallels=(77.5, 77.5),
+    )
 
     plt.figure()
     ax = plt.subplot(121, projection=ccrs.Mercator())
@@ -85,3 +88,52 @@ def test_barents_transform_points(tmpdir, plot):
     if plot:
         plt.show()
 
+
+def test_mywave_transform_points(tmpdir, plot):
+    d = Dataset(
+        "barents",
+        'https://thredds.met.no/thredds/dodsC/sea/mywavewam4/mywavewam4_be',
+        'rlon', 'rlat', ['hs'])
+    assert d.ds.rio.crs is not None
+    print(repr(d.crs))
+
+    v = d.ds['hs'].sel(time="2022-11-06T02:00:00")
+    print(v)
+
+    ## Try to get some values and check if they end up where they should.
+    t = Target.from_lonlat(5, 10, 55, 60, 100, 100, tmpdir)
+    tbox = t.bbox
+    t_crs = t.cartopy_crs
+
+    vo = d.regrid(d.ds['hs'], t, pd.to_datetime("2022-11-06T02:00:00"))
+    print(vo)
+
+    import cartopy.feature as cfeature
+    land = cfeature.GSHHSFeature(scale='auto',
+                                 edgecolor='black',
+                                 facecolor=cfeature.COLORS['land'])
+
+    # import pyresample as pr
+    # adef, _  = pr.utils.load_cf_area(d.ds)
+    # print(adef)
+
+    # mcrs = ccrs.RotatedPole(
+    #     pole_longitude=140.,
+    #     pole_latitude=22.,
+    # )
+
+    plt.figure()
+    # ax = plt.subplot(121, projection=ccrs.Mercator())
+    # v.plot(transform=mcrs)
+    # ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+    # ax.add_feature(land)
+    # ex = ax.get_extent(crs=ccrs.Mercator())
+
+    ax = plt.subplot(111, projection=ccrs.Mercator())
+    vo.plot(transform=t.cartopy_crs)
+    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+    ax.add_feature(land)
+    # ax.set_extent(ex, crs=ccrs.Mercator())
+
+    if plot:
+        plt.show()

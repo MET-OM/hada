@@ -4,7 +4,7 @@
 # [X] Lufttemperatur (celsius grader)
 # [X] Sjøtemperatur (celsius grader)
 # [X] Signifikant bølgehøyde (m)
-# [/] (Iskonsentrasjon (fraksjon))
+# [X] (Iskonsentrasjon (fraksjon))
 # [ ] Sikt (0/1)*
 # [X] Strømhastighet
 # [X] Disse er sammenstilt til felles tidssteg for hver time i forcast perioden.
@@ -65,6 +65,4 @@ y = 'rlat'
 [datasets.mywavewam4.variables]
 significant_wave_height = 'hs'
 
-# https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be
-# https://thredds.met.no/thredds/dodsC/cmems/mywavewam3km/dataset-wam-arctic-1hr3km-be.ncml
 # https://thredds.met.no/thredds/dodsC/cmems/topaz6/dataset-topaz6-arc-15min-3km-be.ncml
