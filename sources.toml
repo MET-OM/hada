@@ -17,7 +17,7 @@
 scalar_variables = [
   'air_temperature',
   'sea_temperature',
-  # 'ice_concentration',
+  'ice_concentration',
   'significant_wave_height',
 ]
 

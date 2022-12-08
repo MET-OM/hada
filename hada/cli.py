@@ -77,7 +77,9 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
 
             # Acquire variables on target grid
             vo = d.regrid(v, target, time)
-            ds[var] = vo
+
+            if vo is not None:  # None if outside domain
+                ds[var] = vo
         else:
             logger.error(f'No dataset found for variable {var}.')
 
@@ -95,8 +97,9 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
             vox = d.regrid(vx, target, time)
             voy = d.regrid(vy, target, time)
 
-            vox.values = vector.magnitude(vox.values, voy.values)
-            ds[var] = vox
+            if vox is not None and voy is not None:  # None if outside domain.
+                vox.values = vector.magnitude(vox.values, voy.values)
+                ds[var] = vox
         else:
             logger.error(f'No dataset found for variable {varx},{vary}.')
 

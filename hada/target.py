@@ -66,11 +66,7 @@ class Target:
         """
 
         gcrs = Target.crs.geodetic_crs
-        print(repr(Target.crs))
-        print(repr(gcrs))
-
         t = pyproj.Transformer.from_crs(gcrs, Target.crs, always_xy=True)
-        print(repr(t))
 
         x0, y0, x1, y1 = t.transform_bounds(lonmin, latmin, lonmax, latmax)
         logger.info(

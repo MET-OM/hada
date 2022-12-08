@@ -58,10 +58,10 @@ class Dataset:
         self.ymin, self.ymax = self.y.min(), self.y.max()
 
         if not all(np.diff(self.x) - self.dx == 0):
-            logger.error(f'X coordinate not monotonic: {np.max(np.diff(self.x)-self.dx)}')
+            logger.error(f'X coordinate not monotonic, max deviation from dx: {np.max(np.diff(self.x)-self.dx)}')
 
         if not all(np.diff(self.y) - self.dy == 0):
-            logger.error(f'Y coordinate not monotonic: {np.max(np.diff(self.y)-self.dy)}')
+            logger.error(f'Y coordinate not monotonic, max deviation from dy: {np.max(np.diff(self.y)-self.dy)}')
 
         logger.debug(
             f'x: {self.x.shape} / {self.dx}, y: {self.y.shape} / {self.dy}')
