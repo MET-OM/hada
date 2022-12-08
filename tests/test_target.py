@@ -31,23 +31,24 @@ def test_calculate_grid(tmpdir):
     print(tx, ty)
 
 
-def test_init_lonlat(tmpdir):
+def test_init_lonlat(tmpdir, plot):
     t = Target.from_lonlat(5, 10, 55, 60, 1000, 1000, tmpdir)
 
-    # plot bounding box
-    # from shapely.geometry import box
-    # llbox = box(5, 55, 10, 60)
-    # prbox = t.bbox
+    if plot:
+        # plot bounding box
+        from shapely.geometry import box
+        llbox = box(5, 55, 10, 60)
+        prbox = t.bbox
 
-    # p_crs = ccrs.epsg(t.epsg)
+        p_crs = ccrs.epsg(t.epsg)
 
-    # ax = plt.axes(projection=ccrs.Mercator())
-    # plt.plot(*llbox.exterior.xy, '-x', transform=ccrs.PlateCarree(), label='ll box')
-    # plt.plot(*prbox.exterior.xy, '-x', transform=p_crs, label='target box')
-    # ax.gridlines(draw_labels=True, crs=ccrs.PlateCarree())
+        ax = plt.axes(projection=ccrs.Mercator())
+        plt.plot(*llbox.exterior.xy, '-x', transform=ccrs.PlateCarree(), label='ll box')
+        plt.plot(*prbox.exterior.xy, '-x', transform=p_crs, label='target box')
+        ax.gridlines(draw_labels=True, crs=ccrs.PlateCarree())
 
-    # plt.legend()
-    # plt.show()
+        plt.legend()
+        plt.show()
 
 
 def test_transform_from_latlon():
