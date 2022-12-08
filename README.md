@@ -25,5 +25,5 @@ containing 'temp':
 
 
 ```
-$ hada --log-level=debug -v temp --bbox 5,6,64,64.3 --nx 10 --ny 15 --output test3.nc
+$ hada --log-level=debug -v temp --bbox-deg 5,6,64,64.3 --dx 0.01 --dy 0.01 --output test3.nc
 ```
