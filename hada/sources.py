@@ -47,7 +47,6 @@ class Dataset:
             self.ds = self.ds.rename_vars({self.y_v: 'Y'})
             # self.ds = self.ds.rename_dims({self.y_v: 'Y'})
 
-        # TODO: likely to be specific to dataset
         self.x = self.ds['X'].values
         self.y = self.ds['Y'].values
 
@@ -58,10 +57,14 @@ class Dataset:
         self.ymin, self.ymax = self.y.min(), self.y.max()
 
         if not all(np.diff(self.x) - self.dx == 0):
-            logger.error(f'X coordinate not monotonic, max deviation from dx: {np.max(np.diff(self.x)-self.dx)}')
+            logger.error(
+                f'X coordinate not monotonic, max deviation from dx: {np.max(np.diff(self.x)-self.dx)}'
+            )
 
         if not all(np.diff(self.y) - self.dy == 0):
-            logger.error(f'Y coordinate not monotonic, max deviation from dy: {np.max(np.diff(self.y)-self.dy)}')
+            logger.error(
+                f'Y coordinate not monotonic, max deviation from dy: {np.max(np.diff(self.y)-self.dy)}'
+            )
 
         logger.debug(
             f'x: {self.x.shape} / {self.dx}, y: {self.y.shape} / {self.dy}')
@@ -69,12 +72,10 @@ class Dataset:
             f'x: {self.x.min()} -> {self.x.max()}, y: {self.y.min()} -> {self.y.max()}'
         )
 
-        logger.info(f'time: {self.ds.time.values[0]} -> {self.ds.time.values[-1]}')
+        logger.info(
+            f'time: {self.ds.time.values[0]} -> {self.ds.time.values[-1]}')
 
         self.crs = self.ds.rio.crs
-        # self.crs = pyproj.Proj(
-        #     '+proj=stere +ellps=WGS84 +lat_0=90.0 +lat_ts=60.0 +x_0=3192800 +y_0=1784000 +lon_0=70'
-        # )
         logger.debug(f'CRS: {self.crs}')
 
     def __repr__(self):
@@ -86,16 +87,6 @@ class Dataset:
 
         # Calculating the location of the target grid cells
         # in this datasets coordinate system.
-
-        # tf = pyproj.Transformer.from_proj(target.crs, self.crs)
-
-        # self.target_x, self.target_y = tf.transform(
-        #     target.xx.ravel(), target.yy.ravel())
-
-        # target_x, target_y = self.crs(target.xx.ravel(),
-        #                               target.yy.ravel(),
-        #                               inverse=False)
-
         target_x, target_y = target.itransform(self.crs, target.xx.ravel(),
                                                target.yy.ravel())
 
@@ -115,7 +106,8 @@ class Dataset:
         Return values for the target grid.
         """
         time = np.atleast_1d(time)
-        logger.info(f'Regridding {var} between {np.min(time)} and {np.max(time)}')
+        logger.info(
+            f'Regridding {var} between {np.min(time)} and {np.max(time)}')
 
         target_x, target_y, inbounds = self.__calculate_grid__(target)
 
@@ -151,7 +143,6 @@ class Dataset:
 
         logger.debug(f'Load block between x: {x0}..{x1}, y: {y0}..{y1}')
         block = var.sel(X=slice(x0, x1), Y=slice(y0, y1)).load()
-        # block.isel(time=1).plot()
 
         logger.debug(f'Extracting values from block: {block.shape=}')
 
@@ -176,27 +167,12 @@ class Dataset:
                           attrs=var.attrs,
                           name=var.name)
 
-        # Positions in source grid
-        # vo.attrs['x'] = target_x
-        # vo.attrs['y'] = target_y
-
-        # vo.latitude.attrs['units'] = 'degrees_north'
-        # vo.latitude.attrs['standard_name'] = 'latitude'
-        # vo.latitude.attrs['long_name'] = 'latitude'
-
-        # vo.longitude.attrs['units'] = 'degrees_east'
-        # vo.longitude.attrs['standard_name'] = 'longitude'
-        # vo.longitude.attrs['long_name'] = 'longitude'
-
         vo.attrs['grid_mapping'] = target.proj_name
         vo.attrs['source'] = self.url
         vo.attrs['source_name'] = self.name
 
-        # plt.figure()
-        # vo.isel(time=1).plot()
         logger.debug(f'Block ({block.shape}) -> vo ({vo.shape})')
 
-        # plt.show()
         return vo
 
     def rotate_vectors(self, vx, vy, target):
@@ -268,7 +244,9 @@ class Sources:
                     else:
                         assert vo.shape == vod.shape
                         td = np.isnan(vo.values) & ~np.isnan(vod.values)
-                        logger.info(f'Merging {len(td[td])} values into output variable: {vo.shape}')
+                        logger.info(
+                            f'Merging {len(td[td])} values into output variable: {vo.shape}'
+                        )
                         vo.values[td] = vod.values[td]
                 else:
                     logger.debug(f'{var} completely out of domain of {d}.')

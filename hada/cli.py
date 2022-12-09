@@ -128,8 +128,8 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
             if vo is not None:
                 ds[var] = vo
 
-    logger.info('Merging variables into new dataset..')
     ds[target.proj_name] = target.proj_var
+
     logger.info('Re-gridded dataset done')
     print(ds)
 

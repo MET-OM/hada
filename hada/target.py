@@ -26,6 +26,7 @@ class Target:
         """
         v = xr.DataArray(name=self.proj_name)
         v.attrs['grid_mapping_name'] = self.grid_mapping_name
+        v.attrs['epsg'] = self.epsg
         return v
 
     def __init__(self, xmin, xmax, ymin, ymax, nx, ny, output):
