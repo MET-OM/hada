@@ -53,8 +53,13 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
         if dy is None:
             dy = 800
 
+        assert bbox_m[1] > bbox_m[0], "xmax must be greater than xmin"
+        assert bbox_m[3] > bbox_m[2], "ymax must be greater than ymin"
+
         nx = np.max((int((bbox_m[1] - bbox_m[0]) / dx), 1))
         ny = np.max((int((bbox_m[3] - bbox_m[2]) / dy), 1))
+
+        logger.debug(f'{bbox_m}: {nx=}, {ny=}, {dx=}, {dy=}')
 
         target = Target(bbox_m[0], bbox_m[1], bbox_m[2], bbox_m[3], nx, ny, output)
     else:
@@ -69,6 +74,9 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
 
         bbox_d = list(map(lambda x: float(x.strip()), bbox_deg.split(",")))
         assert len(bbox_d) == 4, "Bounding box should consit of 4 comma-separated floats"
+
+        assert bbox_d[1] > bbox_d[0], "xmax must be greater than xmin"
+        assert bbox_d[3] > bbox_d[2], "ymax must be greater than ymin"
 
         nx = np.max((int((bbox_d[1] - bbox_d[0]) / dx), 1))
         ny = np.max((int((bbox_d[3] - bbox_d[2]) / dy), 1))
