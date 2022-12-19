@@ -63,6 +63,7 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
 
         target = Target(bbox_m[0], bbox_m[1], bbox_m[2], bbox_m[3], nx, ny, output)
     else:
+        # default
         if bbox_deg is None:
             bbox_deg = "5,10,60,65"
 

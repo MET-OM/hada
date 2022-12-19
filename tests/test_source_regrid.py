@@ -162,3 +162,45 @@ def test_regrid_wind_fallback(sourcetoml, tmpdir):
 
     assert not np.isnan(x_wind).any()
     assert not np.isnan(y_wind).any()
+
+def test_era5_transform_points(tmpdir, plot):
+    d = Dataset(
+        "era5",
+        "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202205.nc",
+        'longitude', 'latitude', ['sst'], proj4='+proj=latlong')
+
+    v = d.ds['sst'].sel(time="2022-05-06T02:00:00", method='nearest')
+    print(v)
+
+    ## Try to get some values and check if they end up where they should.
+    t = Target.from_lonlat(5, 10, 55, 60, 100, 100, tmpdir)
+
+    tbox = t.bbox
+    t_crs = t.cartopy_crs
+
+    vo = d.regrid(d.ds['sst'], t, pd.to_datetime("2022-11-06T02:00:00"))
+    print(vo)
+
+    ncrs = ccrs.Geodetic()
+
+    import cartopy.feature as cfeature
+    land = cfeature.GSHHSFeature(scale='auto',
+                                 edgecolor='black',
+                                 facecolor=cfeature.COLORS['land'])
+
+    plt.figure()
+    ax = plt.subplot(121, projection=ccrs.Mercator())
+    # v.plot(transform=ncrs)
+    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+    ax.add_feature(land)
+    ex = ax.get_extent(crs=ccrs.Mercator())
+
+    ax = plt.subplot(122, projection=ccrs.Mercator())
+    vo.plot(transform=t.cartopy_crs)
+    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+    ax.add_feature(land)
+    ax.set_extent(ex, crs=ccrs.Mercator())
+
+    if plot:
+        plt.show()
+

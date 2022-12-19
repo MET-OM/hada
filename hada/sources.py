@@ -6,7 +6,7 @@ import numpy as np
 import xarray as xr
 import rioxarray as _
 import cf_xarray as _
-import pyproj
+from pyproj.crs import CRS
 from functools import cache
 
 from .vector import rotate_vectors
@@ -28,7 +28,7 @@ class Dataset:
     y: np.ndarray
     kdtree: Any
 
-    def __init__(self, name, url, x, y, variables):
+    def __init__(self, name, url, x, y, variables, proj4=None):
         self.name = name
         self.url = url
         self.variables = variables
@@ -38,7 +38,17 @@ class Dataset:
         logger.info(
             f'{self.name}: opening: {self.url} for variables: {self.variables}'
         )
-        self.ds = xr.decode_cf(xr.open_dataset(url, decode_coords='all'))
+
+        if '*' in url:
+            self.ds = xr.decode_cf(
+                xr.open_mfdataset(url,
+                                  decode_coords='all',
+                                  parallel=True,
+                                  decode_cf=False))
+        else:
+            self.ds = xr.decode_cf(
+                xr.open_dataset(url, decode_coords='all', decode_cf=False))
+
         if x != 'X':
             self.ds = self.ds.rename_vars({self.x_v: 'X'})
             # self.ds = self.ds.rename_dims({self.x_v: 'X'})
@@ -75,7 +85,11 @@ class Dataset:
         logger.info(
             f'time: {self.ds.time.values[0]} -> {self.ds.time.values[-1]}')
 
-        self.crs = self.ds.rio.crs
+        if proj4 is not None:
+            self.crs = CRS.from_proj4(proj4)
+        else:
+            self.crs = self.ds.rio.crs
+
         logger.debug(f'CRS: {self.crs}')
 
     def __repr__(self):
@@ -136,18 +150,38 @@ class Dataset:
             var = var.isel(ensemble_member=0)
 
         # Extract block
-        x0 = np.min(target_x[inbounds]) - self.dx
-        x1 = np.max(target_x[inbounds]) + self.dx
-        y0 = np.min(target_y[inbounds]) - self.dy
-        y1 = np.max(target_y[inbounds]) + self.dy
+        x0 = np.min(target_x[inbounds]) - np.abs(self.dx)
+        x1 = np.max(target_x[inbounds]) + np.abs(self.dx)
+        y0 = np.min(target_y[inbounds]) - np.abs(self.dy)
+        y1 = np.max(target_y[inbounds]) + np.abs(self.dy)
 
-        logger.debug(f'Load block between x: {x0}..{x1}, y: {y0}..{y1}')
+        swap_y = self.dy < 0
+        swap_x = self.dx < 0
+
+        # Shifted indices (XXX: is this flipped somehow when swap_*?)
+        tx = np.floor((target_x[inbounds] - x0) / np.abs(self.dx)).astype(int)
+        ty = np.floor((target_y[inbounds] - y0) / np.abs(self.dy)).astype(int)
+
+        if swap_y:
+            logger.debug('y is decreasing, swapping direction.')
+            y1, y0 = y0, y1
+
+        if swap_x:
+            logger.debug('x is decreasing, swapping direction.')
+            x1, x0 = x0, x1
+
+        logger.debug(
+            f'Load block between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
+        )
         block = var.sel(X=slice(x0, x1), Y=slice(y0, y1)).load()
 
-        logger.debug(f'Extracting values from block: {block.shape=}')
+        if swap_y:
+            block = block[..., ::-1, :]
 
-        tx = np.floor((target_x[inbounds] - x0) / self.dx).astype(int)
-        ty = np.floor((target_y[inbounds] - y0) / self.dy).astype(int)
+        if swap_x:
+            block = block[..., :, ::-1]
+
+        logger.debug(f'Extracting values from block: {block.shape=}')
 
         shape = list(block.shape)[:-2] + list(target_x.shape)
         shape = tuple(shape)

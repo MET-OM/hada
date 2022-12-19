@@ -1,0 +1,53 @@
+# Scalar variables
+scalar_variables = [
+  'air_temperature',
+  'sea_temperature',
+  'ice_concentration',
+  'significant_wave_height',
+]
+
+# Argument order must match input to calculating function.
+[derived_variables]
+horizontal_visibility = [ 'relative_humidity', 'fog' ]
+
+# Vector variables to read into a single magnitude scalar field.
+[vector_magnitude_variables]
+wind = ["x_wind", "y_wind"]
+current = ["x_sea_water", "y_sea_water"]
+
+# Prioritized list of datasets
+# [datasets.nora3]
+# url = "https://thredds.met.no/thredds/dodsC/nora3agg/nora3hindcastaggregated.ncml"
+# x = 'X'
+# y = 'Y'
+
+# [datasets.nora3.variables]
+# sea_temperature = 'temperature'
+# x_wind = 'Uwind'
+# y_wind = 'Vwind'
+# x_sea_water = 'u'
+# y_sea_water = 'v'
+
+[datasets.era5_atm]
+url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_202205.nc"
+x = 'longitude'
+y = 'latitude'
+proj4 = '+proj=latlong'
+
+[datasets.era5_atm.variables]
+x_wind = 'u10'
+y_wind = 'v10'
+
+[datasets.era5_sst]
+url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202205.nc"
+x = 'longitude'
+y = 'latitude'
+proj4 = '+proj=latlong'
+
+[datasets.era5_atm.variables]
+sea_temperature = 'sst'
+
+# [dataset.era5_wave]
+# url = "/lustre/storeB/project/fou/om/ERA/ERA5/wave"
+
+
