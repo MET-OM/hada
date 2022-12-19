@@ -39,12 +39,19 @@ class Dataset:
             f'{self.name}: opening: {self.url} for variables: {self.variables}'
         )
 
-        if '*' in url:
+        if '*' in url or isinstance(url, list):
             self.ds = xr.decode_cf(
-                xr.open_mfdataset(url,
-                                  decode_coords='all',
-                                  parallel=True,
-                                  decode_cf=False))
+                xr.open_mfdataset(
+                    url,
+                    decode_coords='all',
+                    parallel=True,
+                    decode_cf=False,
+                    # engine='h5netcdf',
+                    chunks={
+                        'time': 1,
+                        self.x_v: 100,
+                        self.y_v: 100
+                    }))
         else:
             self.ds = xr.decode_cf(
                 xr.open_dataset(url, decode_coords='all', decode_cf=False))
@@ -82,8 +89,11 @@ class Dataset:
             f'x: {self.x.min()} -> {self.x.max()}, y: {self.y.min()} -> {self.y.max()}'
         )
 
+        dt = (self.ds.time.values[1] -
+              self.ds.time.values[0]) / np.timedelta64(1, 'h')
         logger.info(
-            f'time: {self.ds.time.values[0]} -> {self.ds.time.values[-1]}')
+            f'time: {self.ds.time.values[0]} -> {self.ds.time.values[-1]} (dt: {dt} h)'
+        )
 
         if proj4 is not None:
             self.crs = CRS.from_proj4(proj4)
@@ -127,6 +137,11 @@ class Dataset:
 
         if not any(inbounds.ravel()):
             logger.warning('Target is outside the domain of this reader')
+            return None
+
+        if np.min(time) > var.time[-1] or np.max(time) < var.time[0]:
+            logger.warning(
+                'Target time is outside the time span of this reader')
             return None
 
         logger.info('Selecting time slice..')
@@ -189,6 +204,11 @@ class Dataset:
 
         vo = np.full(shape, np.nan, dtype=block.dtype)
         vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
+
+        # Fill invalid times with nans
+        invalid = np.logical_or(time > var.time.values[-1],
+                                time < var.time.values[0])
+        vo[invalid, ...] = np.nan
 
         # Construct new coordinates
         coords = {'time': time}

@@ -22,10 +22,11 @@ logger = logging.getLogger(__name__)
 @click.option('--dy', help='Grid size in y direction')
 @click.option('--from', 't0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
 @click.option('--to', 't1', type=click.DateTime(), help='UTC date-time end (default: now)')
+@click.option('--freq', default='1H', type=str, help='Time delta in time span.')
 @click.option('-d', '--dataset-filter', multiple=True, help='Only include datasets containing string')
 @click.option('-v', '--variable-filter', multiple=True, help='Only include variables containing string')
 @click.option('--output', type=click.Path(), help='Output file')
-def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, variable_filter, output):
+def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, freq, dataset_filter, variable_filter, output):
     coloredlogs.install(level=log_level)
 
     if t0 is None:
@@ -36,7 +37,7 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
 
     logger.info(f"hada: {t0} -> {t1}")
 
-    time = pd.date_range(t0, t1, freq='1H')
+    time = pd.date_range(t0, t1, freq=freq)
 
     # Compute target grid
     if bbox_deg is not None and bbox_m is not None:
@@ -45,7 +46,7 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
 
     if bbox_m:
         bbox_m = list(map(lambda x: float(x.strip()), bbox_m.split(",")))
-        assert len(bbox_m) == 4, "Bounding box should consit of 4 comma-separated floats"
+        assert len(bbox_m) == 4, "Bounding box should consist of 4 comma-separated floats"
 
         if dx is None:
             dx = 800
@@ -74,7 +75,7 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, dataset_filter, v
             dy = 0.05
 
         bbox_d = list(map(lambda x: float(x.strip()), bbox_deg.split(",")))
-        assert len(bbox_d) == 4, "Bounding box should consit of 4 comma-separated floats"
+        assert len(bbox_d) == 4, "Bounding box should consist of 4 comma-separated floats"
 
         assert bbox_d[1] > bbox_d[0], "xmax must be greater than xmin"
         assert bbox_d[3] > bbox_d[2], "ymax must be greater than ymin"

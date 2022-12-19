@@ -28,23 +28,23 @@ current = ["x_sea_water", "y_sea_water"]
 # x_sea_water = 'u'
 # y_sea_water = 'v'
 
-[datasets.era5_atm]
-url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_202205.nc"
-x = 'longitude'
-y = 'latitude'
-proj4 = '+proj=latlong'
+# [datasets.era5_atm]
+# url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_202205.nc"
+# x = 'longitude'
+# y = 'latitude'
+# proj4 = '+proj=latlong'
 
-[datasets.era5_atm.variables]
-x_wind = 'u10'
-y_wind = 'v10'
+# [datasets.era5_atm.variables]
+# x_wind = 'u10'
+# y_wind = 'v10'
 
 [datasets.era5_sst]
-url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202205.nc"
+url = ["/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202204.nc", "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202205.nc"]
 x = 'longitude'
 y = 'latitude'
 proj4 = '+proj=latlong'
 
-[datasets.era5_atm.variables]
+[datasets.era5_sst.variables]
 sea_temperature = 'sst'
 
 # [dataset.era5_wave]
