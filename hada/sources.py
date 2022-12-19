@@ -45,7 +45,6 @@ class Dataset:
                     url,
                     decode_coords='all',
                     parallel=True,
-                    decode_cf=False,
                     # engine='h5netcdf',
                     chunks={
                         'time': 1,
@@ -54,7 +53,7 @@ class Dataset:
                     }))
         else:
             self.ds = xr.decode_cf(
-                xr.open_dataset(url, decode_coords='all', decode_cf=False))
+                xr.open_dataset(url, decode_coords='all'))
 
         if x != 'X':
             self.ds = self.ds.rename_vars({self.x_v: 'X'})
