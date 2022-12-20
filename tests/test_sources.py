@@ -31,8 +31,6 @@ def test_load_norkyst():
     assert d.ds.rio.crs is not None
 
     print(d.ds)
-    print(d.ds.cf['x_wind'])
-    print(d.ds.cf)
 
     # dd, i = d.kdtree.query(np.array([d.x[0], d.y[0]]))
     # print(i)
