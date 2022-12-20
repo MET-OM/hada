@@ -1,4 +1,4 @@
-import pytest
+import pytest, os
 from hada.sources import *
 from hada.target import Target
 import pandas as pd
@@ -167,6 +167,7 @@ def test_regrid_wind_fallback(sourcetoml, tmpdir):
     assert not np.isnan(x_wind).any()
     assert not np.isnan(y_wind).any()
 
+@pytest.mark.skipif(not os.path.exists('/lustre/storeB/project/fou/om/ERA/ERA5/atm'), reason="dataset not accessible, skipping dependent tests")
 def test_era5_transform_points(tmpdir, plot):
     d = Dataset(
         "era5",
