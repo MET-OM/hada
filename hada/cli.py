@@ -69,10 +69,10 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, freq, dataset_fil
             bbox_deg = "5,10,60,65"
 
         if dx is None:
-            dx = 0.05
+            dx = 0.5
 
         if dy is None:
-            dy = 0.05
+            dy = 0.5
 
         bbox_d = list(map(lambda x: float(x.strip()), bbox_deg.split(",")))
         assert len(bbox_d) == 4, "Bounding box should consist of 4 comma-separated floats"

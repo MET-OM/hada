@@ -7,6 +7,9 @@ from click.testing import CliRunner
 def sourcetoml():
     return Path(__file__).parent.parent / 'sources.toml'
 
+@pytest.fixture
+def cosrvatoml():
+    return Path(__file__).parent.parent / 'projects' / 'cosrva.toml'
 
 @pytest.fixture
 def runner():

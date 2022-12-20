@@ -5,7 +5,7 @@ import toml
 import numpy as np
 import xarray as xr
 import rioxarray as _
-import cf_xarray as _
+import pandas as pd
 from pyproj.crs import CRS
 from functools import cache
 
@@ -39,7 +39,7 @@ class Dataset:
             f'{self.name}: opening: {self.url} for variables: {self.variables}'
         )
 
-        if '*' in url or isinstance(url, list):
+        if '*' in url or type(url) is list:
             self.ds = xr.decode_cf(
                 xr.open_mfdataset(
                     url,
@@ -128,7 +128,11 @@ class Dataset:
         """
         Return values for the target grid.
         """
+        if not isinstance(time, pd.DatetimeIndex):
+            time = pd.to_datetime(time).to_datetime64()
+
         time = np.atleast_1d(time)
+
         logger.info(
             f'Regridding {var} between {np.min(time)} and {np.max(time)}')
 
@@ -142,6 +146,9 @@ class Dataset:
             logger.warning(
                 'Target time is outside the time span of this reader')
             return None
+
+        # Calculate invalid time steps before selecting time.
+        invalid = (time > var.time.values.max()) | (time < var.time.values.min())
 
         logger.info('Selecting time slice..')
         var = var.sel(time=time, method='nearest')
@@ -184,7 +191,7 @@ class Dataset:
             logger.debug('x is decreasing, swapping direction.')
             x1, x0 = x0, x1
 
-        logger.debug(
+        logger.info(
             f'Load block between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
         )
         block = var.sel(X=slice(x0, x1), Y=slice(y0, y1)).load()
@@ -205,8 +212,6 @@ class Dataset:
         vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
         # Fill invalid times with nans
-        invalid = np.logical_or(time > var.time.values[-1],
-                                time < var.time.values[0])
         vo[invalid, ...] = np.nan
 
         # Construct new coordinates

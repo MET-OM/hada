@@ -2,6 +2,7 @@ import pytest
 from hada.sources import *
 from hada.target import Target
 import pandas as pd
+from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -27,24 +28,24 @@ def test_norkyst_transform_points(tmpdir, plot):
     vo = d.regrid(d.ds['Uwind'], t, pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
 
-    ncrs = ccrs.Stereographic(true_scale_latitude=60,
-                              central_latitude=90,
-                              central_longitude=70,
-                              false_easting=3192800,
-                              false_northing=1784000)
-
-    plt.figure()
-    ax = plt.subplot(121, projection=ccrs.Mercator())
-    v.plot(transform=ncrs)
-    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    ex = ax.get_extent(crs=ccrs.Mercator())
-
-    ax = plt.subplot(122, projection=ccrs.Mercator())
-    vo.plot(transform=t.cartopy_crs)
-    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    ax.set_extent(ex, crs=ccrs.Mercator())
-
     if plot:
+        ncrs = ccrs.Stereographic(true_scale_latitude=60,
+                                central_latitude=90,
+                                central_longitude=70,
+                                false_easting=3192800,
+                                false_northing=1784000)
+
+        plt.figure()
+        ax = plt.subplot(121, projection=ccrs.Mercator())
+        v.plot(transform=ncrs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ex = ax.get_extent(crs=ccrs.Mercator())
+
+        ax = plt.subplot(122, projection=ccrs.Mercator())
+        vo.plot(transform=t.cartopy_crs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ax.set_extent(ex, crs=ccrs.Mercator())
+
         plt.show()
 
 
@@ -74,18 +75,18 @@ def test_barents_transform_points(tmpdir, plot):
         standard_parallels=(77.5, 77.5),
     )
 
-    plt.figure()
-    ax = plt.subplot(121, projection=ccrs.Mercator())
-    v.plot(transform=bcrs)
-    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    ex = ax.get_extent(crs=ccrs.Mercator())
-
-    ax = plt.subplot(122, projection=ccrs.Mercator())
-    vo.plot(transform=t.cartopy_crs)
-    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    ax.set_extent(ex, crs=ccrs.Mercator())
-
     if plot:
+        plt.figure()
+        ax = plt.subplot(121, projection=ccrs.Mercator())
+        v.plot(transform=bcrs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ex = ax.get_extent(crs=ccrs.Mercator())
+
+        ax = plt.subplot(122, projection=ccrs.Mercator())
+        vo.plot(transform=t.cartopy_crs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ax.set_extent(ex, crs=ccrs.Mercator())
+
         plt.show()
 
 
@@ -122,20 +123,20 @@ def test_mywave_transform_points(tmpdir, plot):
     #     pole_latitude=22.,
     # )
 
-    plt.figure()
-    # ax = plt.subplot(121, projection=ccrs.Mercator())
-    # v.plot(transform=mcrs)
-    # ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    # ax.add_feature(land)
-    # ex = ax.get_extent(crs=ccrs.Mercator())
-
-    ax = plt.subplot(111, projection=ccrs.Mercator())
-    vo.plot(transform=t.cartopy_crs)
-    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    ax.add_feature(land)
-    # ax.set_extent(ex, crs=ccrs.Mercator())
-
     if plot:
+        plt.figure()
+        # ax = plt.subplot(121, projection=ccrs.Mercator())
+        # v.plot(transform=mcrs)
+        # ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        # ax.add_feature(land)
+        # ex = ax.get_extent(crs=ccrs.Mercator())
+
+        ax = plt.subplot(111, projection=ccrs.Mercator())
+        vo.plot(transform=t.cartopy_crs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ax.add_feature(land)
+        # ax.set_extent(ex, crs=ccrs.Mercator())
+
         plt.show()
 
 
@@ -148,7 +149,10 @@ def test_regrid_wind_fallback(sourcetoml, tmpdir):
                           ),
                           variable_filter=('wind', ))
 
-    time = pd.date_range("2022-12-07", "2022-12-08", freq="1H")
+    t0 = datetime.utcnow() + timedelta(hours=1)
+    t1 = t0 + timedelta(hours=3)
+
+    time = pd.date_range(t0, t1, freq="1H")
 
     nk = s.datasets[0]
     assert nk.name == 'norkyst'
@@ -181,26 +185,26 @@ def test_era5_transform_points(tmpdir, plot):
     vo = d.regrid(d.ds['sst'], t, pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
 
-    ncrs = ccrs.Geodetic()
-
-    import cartopy.feature as cfeature
-    land = cfeature.GSHHSFeature(scale='auto',
-                                 edgecolor='black',
-                                 facecolor=cfeature.COLORS['land'])
-
-    plt.figure()
-    ax = plt.subplot(121, projection=ccrs.Mercator())
-    # v.plot(transform=ncrs)
-    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    ax.add_feature(land)
-    ex = ax.get_extent(crs=ccrs.Mercator())
-
-    ax = plt.subplot(122, projection=ccrs.Mercator())
-    vo.plot(transform=t.cartopy_crs)
-    ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-    ax.add_feature(land)
-    ax.set_extent(ex, crs=ccrs.Mercator())
-
     if plot:
+        ncrs = ccrs.Geodetic()
+
+        import cartopy.feature as cfeature
+        land = cfeature.GSHHSFeature(scale='auto',
+                                    edgecolor='black',
+                                    facecolor=cfeature.COLORS['land'])
+
+        plt.figure()
+        ax = plt.subplot(121, projection=ccrs.Mercator())
+        # v.plot(transform=ncrs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ax.add_feature(land)
+        ex = ax.get_extent(crs=ccrs.Mercator())
+
+        ax = plt.subplot(122, projection=ccrs.Mercator())
+        vo.plot(transform=t.cartopy_crs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ax.add_feature(land)
+        ax.set_extent(ex, crs=ccrs.Mercator())
+
         plt.show()
 
