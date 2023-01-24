@@ -19,34 +19,47 @@ class Target:
     xx: np.ndarray
     yy: np.ndarray
 
+    grid_id = None
+
     @property
     def proj_var(self):
         """
         xarray projection definition (CF).
         """
-        v = xr.DataArray(name=self.proj_name)
+        if grid_id is not None:
+            data = self.grid_id
+        else:
+            data = None
+
+        v = xr.DataArray(data=data, name=self.proj_name)
         v.attrs['grid_mapping_name'] = self.grid_mapping_name
         v.attrs['epsg'] = self.epsg
         return v
 
-    def __init__(self, xmin, xmax, ymin, ymax, nx, ny, output):
+    def __init__(self, output):
+        self.output = output
+
+    @staticmethod
+    def from_box(xmin, xmax, ymin, ymax, nx, ny, output):
         """
         Args:
 
             xmin, ...: bounding box in target grid coordinates.
             nx, ny: grid cells
         """
-        self.xmin, self.xmax, self.ymin, self.ymax = xmin, xmax, ymin, ymax
-        self.nx, self.ny = nx, ny
-        self.output = output
+        t = Target(output)
+        t.xmin, t.xmax, t.ymin, t.ymax = xmin, xmax, ymin, ymax
+        t.nx, t.ny = nx, ny
 
-        self.x = np.linspace(xmin, xmax, nx)
-        self.y = np.linspace(ymin, ymax, ny)
-        self.xx, self.yy = np.meshgrid(self.x, self.y)
+        t.x = np.linspace(xmin, xmax, nx)
+        t.y = np.linspace(ymin, ymax, ny)
+        t.xx, t.yy = np.meshgrid(t.x, t.y)
 
         logger.info(
             f'Target grid set up: x={xmin, xmax}, y={ymin, ymax}, resolution: {nx} x {ny}, output: {output}'
         )
+
+        return t
 
     @property
     def bbox(self):
@@ -57,6 +70,41 @@ class Target:
     def cartopy_crs(self):
         import cartopy.crs as ccrs
         return ccrs.epsg(self.epsg)
+
+    @staticmethod
+    def from_gridfile(fname, output):
+        """
+        Parse DNV CSV grid file.
+        """
+        import pandas as pd
+        grid = pd.read_csv(fname, sep=';')
+
+        print(grid)
+
+        xmin = grid['X'].min()
+        xmax = grid['X'].max()
+        ymin = grid['Y'].min()
+        ymax = grid['Y'].max()
+
+        nx = len(grid['X'])
+        ny = 1
+
+        x = grid['X'].to_numpy()
+        y = grid['Y'].to_numpy()
+
+        t = Target(output)
+        t.xmin, t.xmax, t.ymin, t.ymax = xmin, xmax, ymin, ymax
+        t.nx, t.ny = nx, ny
+        t.x = x
+        t.y = y
+        t.xx = x
+        t.yy = y
+
+        t.grid_id = grid['GRID_ID'].to_numpy()
+        t.lon = grid['Long_WGS84'].to_numpy()
+        t.lat = grid['Lat_WGS84'].to_numpy()
+
+        return t
 
     @staticmethod
     def from_lonlat(lonmin, lonmax, latmin, latmax, *args, **kwargs):
@@ -74,7 +122,7 @@ class Target:
             f'Transformed boundaries from {lonmin}E,{latmin}N - {lonmax}E,{latmax}N -> {x0,y0} - {x1,y1}'
         )
 
-        return Target(x0, x1, y0, y1, *args, **kwargs)
+        return Target.from_box(x0, x1, y0, y1, *args, **kwargs)
 
     @staticmethod
     def transform(from_crs, x, y):
@@ -111,7 +159,7 @@ class Target:
 
         if b180:
             # Domain is from -180 to 180 or somewhere in between.
-            lons = np.mod(lons+180, 360) - 180
+            lons = np.mod(lons + 180, 360) - 180
         else:
             # Domain is from 0 to 360 or somewhere in between.
             lons = np.mod(lons, 360)

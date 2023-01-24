@@ -62,7 +62,7 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, freq, dataset_fil
 
         logger.debug(f'{bbox_m}: {nx=}, {ny=}, {dx=}, {dy=}')
 
-        target = Target(bbox_m[0], bbox_m[1], bbox_m[2], bbox_m[3], nx, ny, output)
+        target = Target.from_box(bbox_m[0], bbox_m[1], bbox_m[2], bbox_m[3], nx, ny, output)
     else:
         # default
         if bbox_deg is None:

@@ -8,11 +8,11 @@ import cartopy.crs as ccrs
 
 
 def test_init(tmpdir):
-    t = Target(5, 10, 55, 60, 100, 100, tmpdir)
+    t = Target.from_box(5, 10, 55, 60, 100, 100, tmpdir)
 
 
 def test_proj_attr(tmpdir):
-    t = Target(5, 10, 55, 60, 100, 100, tmpdir)
+    t = Target.from_box(5, 10, 55, 60, 100, 100, tmpdir)
     print(t.proj_var)
 
 
@@ -75,3 +75,6 @@ def test_transform_from_latlon():
     assert (x, y) == approx((0., 0.))
     # xx, yy = Target.itransform(crs, x, y) # doesn't work, NP singularity?
     # assert (xx, yy) == approx((180., 90))
+
+def test_from_gridfile(tmpdir):
+    t = Target.from_gridfile('projects/Svalbard_3km_Grid_EPSG3575.csv', tmpdir)
