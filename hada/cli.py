@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @click.option('--sources', default='sources.toml', type=click.Path())
 @click.option('--bbox-deg', help='Bounding box in degrees (xmin, xmax, ymin, ymax)')
 @click.option('--bbox-m', help='Bounding box in meters on EPSG:3575 (xmin, xmax, ymin, ymax)')
+@click.option('--grid', help='Specify grid file')
 @click.option('--dx', help='Grid size in x direction')
 @click.option('--dy', help='Grid size in y direction')
 @click.option('--from', 't0', type=click.DateTime(), help='UTC date-time start (default: -1day)')
@@ -26,7 +27,7 @@ logger = logging.getLogger(__name__)
 @click.option('-d', '--dataset-filter', multiple=True, help='Only include datasets containing string')
 @click.option('-v', '--variable-filter', multiple=True, help='Only include variables containing string')
 @click.option('--output', type=click.Path(), help='Output file')
-def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, freq, dataset_filter, variable_filter, output):
+def hada(log_level, sources, grid, bbox_deg, bbox_m, dx, dy, t0, t1, freq, dataset_filter, variable_filter, output):
     coloredlogs.install(level=log_level)
 
     if t0 is None:
@@ -44,7 +45,11 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, freq, dataset_fil
         logger.error('Only one of bbox_deg and bbox_m can be specified at the same time.')
         return 1
 
-    if bbox_m:
+    if grid is not None:
+        logger.info(f'Loading target from grid: {grid}..')
+        target = Target.from_gridfile(grid, output)
+
+    elif bbox_m:
         bbox_m = list(map(lambda x: float(x.strip()), bbox_m.split(",")))
         assert len(bbox_m) == 4, "Bounding box should consist of 4 comma-separated floats"
 
@@ -138,7 +143,8 @@ def hada(log_level, sources, bbox_deg, bbox_m, dx, dy, t0, t1, freq, dataset_fil
             if vo is not None:
                 ds[var] = vo
 
-    ds[target.proj_name] = target.proj_var
+    for v in target.proj_var:
+        ds[v.name] = v
 
     logger.info('Re-gridded dataset done')
     print(ds)

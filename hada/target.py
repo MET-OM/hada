@@ -26,14 +26,20 @@ class Target:
         """
         xarray projection definition (CF).
         """
-        if grid_id is not None:
-            data = self.grid_id
-        else:
-            data = None
-
-        v = xr.DataArray(data=data, name=self.proj_name)
+        v = xr.DataArray(name=self.proj_name)
         v.attrs['grid_mapping_name'] = self.grid_mapping_name
         v.attrs['epsg'] = self.epsg
+
+        v = [v]
+
+        if self.grid_id is not None:
+            vlon = xr.DataArray(name='lons', data=self.lon, coords=[ ('grid_id', self.grid_id)])
+            vlat = xr.DataArray(name='lats', data=self.lat, coords=[ ('grid_id', self.grid_id)])
+            vx = xr.DataArray(name='X', data=self.x, coords=[ ('grid_id', self.grid_id)])
+            vy = xr.DataArray(name='Y', data=self.y, coords=[ ('grid_id', self.grid_id)])
+
+            v.extend([vlon, vlat, vx, vy])
+
         return v
 
     def __init__(self, output):

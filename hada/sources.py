@@ -44,8 +44,8 @@ class Dataset:
                 xr.open_mfdataset(
                     url,
                     decode_coords='all',
-                    parallel=True,
-                    # engine='h5netcdf',
+                    parallel=False,
+                    # engine='hidefix',
                     chunks='auto'))
         else:
             self.ds = xr.decode_cf(
@@ -212,14 +212,22 @@ class Dataset:
 
         # Construct new coordinates
         coords = {'time': time}
-        coords['Y'] = ("Y", target.y)
-        coords['X'] = ("X", target.x)
+        if target.grid_id is not None:
+            coords['grid_id'] = ('grid_id', target.grid_id)
+            vo = xr.DataArray(vo,
+                            dims=('time', 'grid_id'),
+                            coords=coords,
+                            attrs=var.attrs,
+                            name=var.name)
+        else:
+            coords['Y'] = ("Y", target.y)
+            coords['X'] = ("X", target.x)
 
-        vo = xr.DataArray(vo,
-                          dims=('time', 'Y', 'X'),
-                          coords=coords,
-                          attrs=var.attrs,
-                          name=var.name)
+            vo = xr.DataArray(vo,
+                            dims=('time', 'Y', 'X'),
+                            coords=coords,
+                            attrs=var.attrs,
+                            name=var.name)
 
         vo.attrs['grid_mapping'] = target.proj_name
         vo.attrs['source'] = self.url
