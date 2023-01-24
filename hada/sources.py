@@ -46,11 +46,7 @@ class Dataset:
                     decode_coords='all',
                     parallel=True,
                     # engine='h5netcdf',
-                    chunks={
-                        'time': 1,
-                        self.x_v: 100,
-                        self.y_v: 100
-                    }))
+                    chunks='auto'))
         else:
             self.ds = xr.decode_cf(
                 xr.open_dataset(url, decode_coords='all'))
