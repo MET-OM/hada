@@ -11,9 +11,24 @@ repository = "http://github.com/gauteh/hada"
 "hada" = "hada.cli:hada"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.12"
+cartopy = "^0.21.1"
+click = "^8.1.3"
+coloredlogs = "^15.0.1"
+netcdf4 = "^1.6.2"
+pyproj = "^3.4.1"
+rioxarray = "^0.13.3"
+shapely = "^2.0.0"
+tiledb = "^0.20.0"
+toml = "^0.10.2"
+xarray = "^2023.1.0"
 
 [tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+matplotlib = "^3.6.3"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
