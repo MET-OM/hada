@@ -14,6 +14,28 @@ from .vector import rotate_vectors
 logger = logging.getLogger(__name__)
 
 
+def setup_variable(var, target, time, dtype=np.float32, attrs=None):
+    """
+    Set up variable
+    """
+    time = np.atleast_1d(time)
+
+    if target.grid_id is None:
+        shape = (len(time), len(target.y), len(target.x))
+        dims = ('time', 'Y', 'X')
+        coords = {'time': time, 'Y': target.y, 'X': target.x}
+    else:
+        shape = (len(time), len(target.grid_id))
+        dims = ('time', 'grid_id')
+        coords = {'time': time, 'grid_id': target.grid_id}
+
+    vo = np.full(shape, np.nan, dtype=dtype)
+    vo = xr.DataArray(vo, dims=dims, coords=coords, attrs=attrs, name=var)
+    vo.attrs['grid_mapping'] = target.proj_name
+
+    return vo
+
+
 class Dataset:
     name: str
     url: str
@@ -48,8 +70,7 @@ class Dataset:
                     # engine='hidefix',
                     chunks='auto'))
         else:
-            self.ds = xr.decode_cf(
-                xr.open_dataset(url, decode_coords='all'))
+            self.ds = xr.decode_cf(xr.open_dataset(url, decode_coords='all'))
 
         if x != 'X':
             self.ds = self.ds.rename_vars({self.x_v: 'X'})
@@ -144,7 +165,8 @@ class Dataset:
             return None
 
         # Calculate invalid time steps before selecting time.
-        invalid = (time > var.time.values.max()) | (time < var.time.values.min())
+        invalid = (time > var.time.values.max()) | (time <
+                                                    var.time.values.min())
 
         logger.info('Selecting time slice..')
         var = var.sel(time=time, method='nearest')
@@ -204,32 +226,16 @@ class Dataset:
         shape = tuple(shape)
         logger.debug(f'New shape: {shape}')
 
-        vo = np.full(shape, np.nan, dtype=block.dtype)
-        vo[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
+        vd = np.full(shape, np.nan, dtype=block.dtype)
+        vd[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
         # Fill invalid times with nans
-        vo[invalid, ...] = np.nan
+        vd[invalid, ...] = np.nan
 
         # Construct new coordinates
-        coords = {'time': time}
-        if target.grid_id is not None:
-            coords['grid_id'] = ('grid_id', target.grid_id)
-            vo = xr.DataArray(vo,
-                            dims=('time', 'grid_id'),
-                            coords=coords,
-                            attrs=var.attrs,
-                            name=var.name)
-        else:
-            coords['Y'] = ("Y", target.y)
-            coords['X'] = ("X", target.x)
+        vo = setup_variable(var.name, target, time, block.dtype, var.attrs)
+        vo.values[:] = vd
 
-            vo = xr.DataArray(vo,
-                            dims=('time', 'Y', 'X'),
-                            coords=coords,
-                            attrs=var.attrs,
-                            name=var.name)
-
-        vo.attrs['grid_mapping'] = target.proj_name
         vo.attrs['source'] = self.url
         vo.attrs['source_name'] = self.name
 
@@ -258,6 +264,7 @@ class Dataset:
 class Sources:
     scalar_variables: List[str]
     derived_variables: Dict
+    fallback: Dict
     vector_magnitude_variables: Dict
     datasets: List[Dataset]
 
@@ -317,6 +324,14 @@ class Sources:
                 logger.debug(f'{var} completely covered.')
                 break
 
+        if vo is None:
+            logger.debug(f'Variable {var} empty, filling with NaN.')
+            vo = setup_variable(var, target, time)
+
+        if var in self.fallback:
+            logger.debug(f'{var}: setting fallback to: {self.fallback[var]}')
+            vo.values[np.isnan(vo.values)] = self.fallback[var]
+
         return vo
 
     @staticmethod
@@ -337,6 +352,7 @@ class Sources:
 
         scalar_vars = d['scalar_variables']
         derived_vars = d['derived_variables']
+        fallback = d.get('fallback', {})
         vector_mag_vars = d['vector_magnitude_variables']
 
         if len(variable_filter) > 0:
@@ -379,4 +395,5 @@ class Sources:
         return Sources(scalar_variables=scalar_vars,
                        vector_magnitude_variables=vector_mag_vars,
                        derived_variables=derived_vars,
-                       datasets=datasets)
+                       datasets=datasets,
+                       fallback=fallback)

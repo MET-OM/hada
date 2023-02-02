@@ -20,6 +20,9 @@ scalar_variables = [
   'significant_wave_height',
 ]
 
+[fallback]
+ice_concentration = 0.0
+
 # Argument order must match input to calculating function.
 [derived_variables]
 horizontal_visibility = [ 'relative_humidity', 'fog' ]

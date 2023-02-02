@@ -3,6 +3,7 @@ from hada.sources import *
 from hada.target import Target
 import pandas as pd
 from datetime import datetime, timedelta
+import numpy as np
 
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
@@ -30,10 +31,10 @@ def test_norkyst_transform_points(tmpdir, plot):
 
     if plot:
         ncrs = ccrs.Stereographic(true_scale_latitude=60,
-                                central_latitude=90,
-                                central_longitude=70,
-                                false_easting=3192800,
-                                false_northing=1784000)
+                                  central_latitude=90,
+                                  central_longitude=70,
+                                  false_easting=3192800,
+                                  false_northing=1784000)
 
         plt.figure()
         ax = plt.subplot(121, projection=ccrs.Mercator())
@@ -140,6 +141,25 @@ def test_mywave_transform_points(tmpdir, plot):
         plt.show()
 
 
+def test_regrid_ice_fallback_value(sourcetoml, tmpdir):
+    t = Target.from_lonlat(5, 10, 55, 60, 100, 100, tmpdir)
+    s = Sources.from_toml(sourcetoml,
+                          dataset_filter=('barents', ),
+                          variable_filter=('ice_concentration', ))
+
+    t0 = datetime.utcnow() + timedelta(hours=1)
+    t1 = t0 + timedelta(hours=3)
+    time = pd.date_range(t0, t1, freq="1H")
+
+    ice = s.regrid('ice_concentration', t, time)
+    assert ice is not None
+    np.testing.assert_array_equal(ice.values, 0.0)
+
+    s.fallback = {}
+    ice = s.regrid('ice_concentration', t, time)
+    np.testing.assert_array_equal(ice.values, np.nan)
+
+
 def test_regrid_wind_fallback(sourcetoml, tmpdir):
     t = Target.from_lonlat(5, 10, 55, 60, 100, 100, tmpdir)
     s = Sources.from_toml(sourcetoml,
@@ -167,12 +187,17 @@ def test_regrid_wind_fallback(sourcetoml, tmpdir):
     assert not np.isnan(x_wind).any()
     assert not np.isnan(y_wind).any()
 
-@pytest.mark.skipif(not os.path.exists('/lustre/storeB/project/fou/om/ERA/ERA5/atm'), reason="dataset not accessible, skipping dependent tests")
+
+@pytest.mark.skipif(
+    not os.path.exists('/lustre/storeB/project/fou/om/ERA/ERA5/atm'),
+    reason="dataset not accessible, skipping dependent tests")
 def test_era5_transform_points(tmpdir, plot):
     d = Dataset(
         "era5",
         "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202205.nc",
-        'longitude', 'latitude', ['sst'], proj4='+proj=latlong')
+        'longitude',
+        'latitude', ['sst'],
+        proj4='+proj=latlong')
 
     v = d.ds['sst'].sel(time="2022-05-06T02:00:00", method='nearest')
     print(v)
@@ -191,8 +216,8 @@ def test_era5_transform_points(tmpdir, plot):
 
         import cartopy.feature as cfeature
         land = cfeature.GSHHSFeature(scale='auto',
-                                    edgecolor='black',
-                                    facecolor=cfeature.COLORS['land'])
+                                     edgecolor='black',
+                                     facecolor=cfeature.COLORS['land'])
 
         plt.figure()
         ax = plt.subplot(121, projection=ccrs.Mercator())
@@ -208,4 +233,3 @@ def test_era5_transform_points(tmpdir, plot):
         ax.set_extent(ex, crs=ccrs.Mercator())
 
         plt.show()
-
