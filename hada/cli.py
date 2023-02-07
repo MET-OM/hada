@@ -48,8 +48,7 @@ logger = logging.getLogger(__name__)
 @click.option('--output', type=click.Path(), help='Output file')
 @click.option(
     '--always-valid',
-    type=bool,
-    default=False,
+    is_flag=True,
     help=
     'Use a KDTree to always map a point to the nearest valid value, regardless of distance'
 )

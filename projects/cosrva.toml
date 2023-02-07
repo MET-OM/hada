@@ -1,19 +1,15 @@
 # Fra NORA3:
-
 # wind speed 10 m (m/s)
 # air temperature 2m (°C)
 # sea surface temperature (°C)
 # sea ice concentration (fraction)
 # horizontal visibility (m) (based on temp and dew point)
-
-
+#
 # Fra bølgemodellen (MyWaveWAM 3km):
-
 # sign. wave height Hs (m)
 # wave period Tz (s)
 # wave direction (degree)
-
-
+#
 # Området som skal dekkes er hele Svalbard og gjerne med inntil 10 år med data (hver time).
 
 # Scalar variables
@@ -34,18 +30,18 @@ wind = ["x_wind", "y_wind"]
 current = ["x_sea_water", "y_sea_water"]
 
 # Prioritized list of datasets
-# [datasets.nora3]
-# url = "https://thredds.met.no/thredds/dodsC/nora3agg/nora3hindcastaggregated.ncml"
+[datasets.nora3]
+url = "https://thredds.met.no/thredds/dodsC/nora3agg/nora3hindcastaggregated.ncml"
 # url = [ " /lustre/storeB/project/fou/om/NORA3/equinor/atm " ]
-# x = 'x'
-# y = 'y'
+proj4 = '+proj=lcc +lat_0=66.3 +lon_0=-42 +lat_1=66.3 +lat_2=66.3 +no_defs +R=6.371e+06'
+x = 'x'
+y = 'y'
 
-# [datasets.nora3.variables]
-# sea_temperature = 'temperature'
-# x_wind = 'Uwind'
-# y_wind = 'Vwind'
-# x_sea_water = 'u'
-# y_sea_water = 'v'
+[datasets.nora3.variables]
+air_temperature = 'air_temperature_2m'
+x_wind = 'x_wind_10m'
+y_wind = 'y_wind_10m'
+relative_humidity = 'relative_humidity_2m'
 
 # [datasets.era5_atm]
 # url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_202205.nc"
@@ -68,5 +64,4 @@ sea_temperature = 'sst'
 
 # [dataset.era5_wave]
 # url = "/lustre/storeB/project/fou/om/ERA/ERA5/wave"
-
 
