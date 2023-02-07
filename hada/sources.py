@@ -8,6 +8,7 @@ import rioxarray as _
 import pandas as pd
 from pyproj.crs import CRS
 from functools import cache
+from pykdtree.kdtree import KDTree
 
 from .vector import rotate_vectors
 
@@ -122,6 +123,64 @@ class Dataset:
         return f'<Dataset ({self.name} / {self.url})>'
 
     @cache
+    def __interpolate_nearest_valid_grid__(self, target, var: str):
+        """
+        Find the closest point with a value regardless of how far away the point
+        is from a valid point. E.g. a point in the middle of land will get its
+        value from the closest ocean point.
+        """
+
+        logger.info(
+            f'Finding nearest valid grid points (with data) for _all_ target points in {var}..'
+        )
+
+        target_x, target_y, inbounds = self.__calculate_grid__(target)
+
+        sh = target_x.shape
+
+        # Find valid points in this dataset.
+        var = self.ds[var]
+        var = self.__reduce_dimensions__(var)
+        var = var.isel(
+            time=-1
+        )  # XXX: This whole algorithm will fail if somehow the valid points change with the time dimension.
+
+        valid = np.isfinite(var.values)
+        assert valid.any(
+        ), "No points with a value in last timestep for entire {var.name}, probably trouble with input data file."
+
+        yi, xi = np.nonzero(valid)
+        logger.debug(f'Valid points: {len(xi)} of {len(valid.ravel())}')
+
+        x = var.X.values[xi].ravel()
+        y = var.Y.values[yi].ravel()
+
+        # Build a KDTree with valid points, and move the target points to nearest.
+        t = KDTree(np.vstack((x, y)).T)
+        t_points = np.vstack((target_x.ravel(), target_y.ravel())).T
+
+        assert t_points.shape[1] == 2
+
+        _dist, idx = t.query(t_points, k=1)  # New targets.
+        t_xn = x[idx]
+        t_yn = y[idx]
+
+        assert t_points.shape[0] == target_x.ravel().shape[0]
+        assert t_points.shape[0] == t_yn.shape[0]
+        assert t_points.shape[0] == t_xn.shape[0]
+
+        t_xn.shape = target.xx.shape
+        t_yn.shape = target.yy.shape
+
+        assert t_xn.shape == t_yn.shape
+
+        inbounds = np.full(
+            t_xn.shape, True
+        )  # There will always be a valid value now. Consider making this optional.
+
+        return t_xn, t_yn, inbounds
+
+    @cache
     def __calculate_grid__(self, target):
         logger.debug(f'Calculating grid for target: {target.xx.shape}..')
 
@@ -141,37 +200,24 @@ class Dataset:
 
         return target_x, target_y, inbounds
 
-    def regrid(self, var, target, time):
+    def __map_to_index__(self, x, y):
         """
-        Return values for the target grid.
+        Map x and y coordinate to index in X and Y.
         """
-        if not isinstance(time, pd.DatetimeIndex):
-            time = pd.to_datetime(time).to_datetime64()
 
-        time = np.atleast_1d(time)
+        txi = np.floor(x / np.abs(self.dx)).astype(int)
+        tyi = np.floor(y / np.abs(self.dy)).astype(int)
 
-        logger.info(
-            f'Regridding {var} between {np.min(time)} and {np.max(time)}')
+        return txi, tyi
 
-        target_x, target_y, inbounds = self.__calculate_grid__(target)
+    def __shift_to_block__(self, x, y, x0, y0):
+        return (x - x0), (y - y0)
 
-        if not any(inbounds.ravel()):
-            logger.warning('Target is outside the domain of this reader')
-            return None
-
-        if np.min(time) > var.time[-1] or np.max(time) < var.time[0]:
-            logger.warning(
-                'Target time is outside the time span of this reader')
-            return None
-
-        # Calculate invalid time steps before selecting time.
-        invalid = (time > var.time.values.max()) | (time <
-                                                    var.time.values.min())
-
-        logger.info('Selecting time slice..')
-        var = var.sel(time=time, method='nearest')
-
-        ## Reduce and remove unwanted dimensions (selecting first item)
+    def __reduce_dimensions__(self, var):
+        """
+        Reduce the dimensions of a variable (i.e. select first ensemble member, surface elevation or depth.)
+        """
+        logger.debug(f'Reducing dimensions for {var.name}..')
         if 'depth' in var.dims:
             logger.info('Selecting depth0..')
             var = var.sel(depth=0)
@@ -188,6 +234,43 @@ class Dataset:
         if 'ensemble_member' in var.dims:
             var = var.isel(ensemble_member=0)
 
+        return var
+
+    def regrid(self, var, target, time, always_nearest=False):
+        """
+        Return values for the target grid.
+        """
+        if not isinstance(time, pd.DatetimeIndex):
+            time = pd.to_datetime(time).to_datetime64()
+
+        time = np.atleast_1d(time)
+
+        logger.info(
+            f'Regridding {var} between {np.min(time)} and {np.max(time)}')
+
+        if not always_nearest:
+            target_x, target_y, inbounds = self.__calculate_grid__(target)
+        else:
+            target_x, target_y, inbounds = self.__interpolate_nearest_valid_grid__(
+                target, var.name)
+
+        if not any(inbounds.ravel()):
+            logger.warning('Target is outside the domain of this reader')
+            return None
+
+        if np.min(time) > var.time[-1] or np.max(time) < var.time[0]:
+            logger.warning(
+                'Target time is outside the time span of this reader')
+            return None
+
+        # Calculate invalid time steps before selecting time.
+        invalid = (time > var.time.values.max()) | (time <
+                                                    var.time.values.min())
+
+        logger.info('Selecting time slice..')
+        var = var.sel(time=time, method='nearest')
+        var = self.__reduce_dimensions__(var)
+
         # Extract block
         x0 = np.min(target_x[inbounds]) - np.abs(self.dx)
         x1 = np.max(target_x[inbounds]) + np.abs(self.dx)
@@ -198,8 +281,8 @@ class Dataset:
         swap_x = self.dx < 0
 
         # Shifted indices (XXX: is this flipped somehow when swap_*?)
-        tx = np.floor((target_x[inbounds] - x0) / np.abs(self.dx)).astype(int)
-        ty = np.floor((target_y[inbounds] - y0) / np.abs(self.dy)).astype(int)
+        tx, ty = self.__shift_to_block__(target_x[inbounds], target_y[inbounds], x0, y0)
+        tx, ty = self.__map_to_index__(tx, ty)
 
         if swap_y:
             logger.debug('y is decreasing, swapping direction.')

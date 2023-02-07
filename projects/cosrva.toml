@@ -1,3 +1,21 @@
+# Fra NORA3:
+
+# wind speed 10 m (m/s)
+# air temperature 2m (°C)
+# sea surface temperature (°C)
+# sea ice concentration (fraction)
+# horizontal visibility (m) (based on temp and dew point)
+
+
+# Fra bølgemodellen (MyWaveWAM 3km):
+
+# sign. wave height Hs (m)
+# wave period Tz (s)
+# wave direction (degree)
+
+
+# Området som skal dekkes er hele Svalbard og gjerne med inntil 10 år med data (hver time).
+
 # Scalar variables
 scalar_variables = [
   'air_temperature',
