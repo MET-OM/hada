@@ -16,3 +16,4 @@ dependencies:
   - cartopy
   - shapely
   - dask
+  - pykdtree
