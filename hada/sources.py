@@ -376,7 +376,7 @@ class Sources:
 
         return (None, None, None)
 
-    def regrid(self, var, target, time):
+    def regrid(self, var, target, time, always_nearest=False):
         """
         Search through datasets and try to cover the entire target grid with data.
         """
@@ -389,7 +389,7 @@ class Sources:
                 logger.info(f'Found {var} in {d}..')
                 v = d.ds[v]
 
-                vod = d.regrid(v, target, time)
+                vod = d.regrid(v, target, time, always_nearest)
                 if vod is not None:
                     if vo is None:
                         vo = vod
