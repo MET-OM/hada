@@ -83,7 +83,7 @@ class Target:
         Parse DNV CSV grid file.
         """
         import pandas as pd
-        grid = pd.read_csv(fname, sep=';')
+        grid = pd.read_csv(fname, sep=',')
 
         print(grid)
 
