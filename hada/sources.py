@@ -158,6 +158,7 @@ class Dataset:
         # Build a KDTree with valid points, and move the target points to nearest.
         t = KDTree(np.vstack((x, y)).T)
         t_points = np.vstack((target_x.ravel(), target_y.ravel())).T
+        t_points = t_points.astype(x.dtype)
 
         assert t_points.shape[1] == 2
 

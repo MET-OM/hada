@@ -18,6 +18,8 @@ scalar_variables = [
   'sea_temperature',
   'ice_concentration',
   'significant_wave_height',
+  'wave_period',
+  'wave_direction',
 ]
 
 # Argument order must match input to calculating function.
@@ -42,6 +44,16 @@ air_temperature = 'air_temperature_2m'
 x_wind = 'x_wind_10m'
 y_wind = 'y_wind_10m'
 relative_humidity = 'relative_humidity_2m'
+
+[datasets.mywavewam]
+url = 'https://thredds.met.no/thredds/dodsC/windsurfer/mywavewam3km_agg/wam3kmhindcastaggregated.ncml'
+x = 'rlon'
+y = 'rlat'
+
+[datasets.mywavewam.variables]
+significant_wave_height = 'hs'
+wave_period = 'tp'
+wave_direction = 'Pdir'
 
 # [datasets.era5_atm]
 # url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_202205.nc"

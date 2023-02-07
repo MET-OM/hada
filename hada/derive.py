@@ -8,7 +8,14 @@ def hor_vis(rh, fog):
     Calculate horizontal visibilty based on relative humidity and fog fraction.
     """
     assert rh.shape == fog.shape, "rh and fog must be same dimensions"
-    assert fog.max() <= 1.0 and fog.min() >= 0.0, "fog fraction must be number between 0 and 1"
+
+    if not np.isfinite(rh).any() or not np.isfinite(fog).any():
+        logger.debug('horizontal visibilty: rh or fog completely nan filled, setting to NaN')
+        vv = rh
+        vv.values = np.full(rh.shape, np.nan)
+        return vv
+
+    assert np.nanmax(fog) <= 1.0 and np.nanmin(fog) >= 0.0, "fog fraction must be number between 0 and 1"
 
     # rh can be over-saturated, i.e.: more than 1.
     # assert rh.max() <= 1.0 and rh.min() >= 0.0, "relative humidity must be number between 0 and 1"
