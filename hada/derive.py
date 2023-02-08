@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,10 +11,8 @@ def hor_vis(rh, fog):
     assert rh.shape == fog.shape, "rh and fog must be same dimensions"
 
     if not np.isfinite(rh).any() or not np.isfinite(fog).any():
-        logger.debug('horizontal visibilty: rh or fog completely nan filled, setting to NaN')
-        vv = rh
-        vv.values = np.full(rh.shape, np.nan)
-        return vv
+        logger.warning('horizontal visibilty: rh or fog completely nan filled, setting to NaN')
+        return xr.DataArray(np.full(rh.shape, np.nan), dims=rh.dims)
 
     assert np.nanmax(fog) <= 1.0 and np.nanmin(fog) >= 0.0, "fog fraction must be number between 0 and 1"
 
