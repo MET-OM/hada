@@ -1,9 +1,9 @@
 # Fra NORA3:
-# wind speed 10 m (m/s)
-# air temperature 2m (°C)
+# [X] wind speed 10 m (m/s)
+# [X] air temperature 2m (°C)
+# [X] horizontal visibility (m) (based on temp and dew point)
 # sea surface temperature (°C)
 # sea ice concentration (fraction)
-# horizontal visibility (m) (based on temp and dew point)
 #
 # Fra bølgemodellen (MyWaveWAM 3km):
 # [X] sign. wave height Hs (m)
@@ -24,7 +24,7 @@ scalar_variables = [
 
 # Argument order must match input to calculating function.
 [derived_variables]
-horizontal_visibility = [ 'relative_humidity', 'fog' ]
+horizontal_visibility_rh = [ 'relative_humidity' ]
 
 # Vector variables to read into a single magnitude scalar field.
 [vector_magnitude_variables]

@@ -274,16 +274,17 @@ class Dataset:
 
         # Extract block
         x0 = np.min(target_x[inbounds]) - np.abs(self.dx)
-        x1 = np.max(target_x[inbounds]) + 2*np.abs(self.dx)
+        x1 = np.max(target_x[inbounds]) + 2 * np.abs(self.dx)
 
         y0 = np.min(target_y[inbounds]) - np.abs(self.dy)
-        y1 = np.max(target_y[inbounds]) + 2*np.abs(self.dy)
+        y1 = np.max(target_y[inbounds]) + 2 * np.abs(self.dy)
 
         swap_y = self.dy < 0
         swap_x = self.dx < 0
 
         # Shifted indices (XXX: is this flipped somehow when swap_*?)
-        tx, ty = self.__shift_to_block__(target_x[inbounds], target_y[inbounds], x0, y0)
+        tx, ty = self.__shift_to_block__(target_x[inbounds],
+                                         target_y[inbounds], x0, y0)
         tx, ty = self.__map_to_index__(tx, ty)
 
         if swap_y:
@@ -295,7 +296,7 @@ class Dataset:
             x1, x0 = x0, x1
 
         logger.info(
-            f'Load block between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
+            f'Load block for {len(time)} time steps between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
         )
         block = var.sel(X=slice(x0, x1), Y=slice(y0, y1)).load()
 

@@ -33,9 +33,17 @@ def hor_vis(rh, fog):
 
     return vv
 
+def hor_vis_rh(rh):
+    rh = rh * 100.
+    vv = (-5.19e-10)*(rh**5.44) + 40.1
+    return vv
+
+
 def derive(var, *args):
     if var == 'horizontal_visibility':
         return hor_vis(*args)
+    elif var == 'horizontal_visibility_rh':
+        return hor_vis_rh(*args)
     else:
         raise ValueError(f"Unknown derived variable: {var}")
 
