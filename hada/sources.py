@@ -223,6 +223,9 @@ class Dataset:
             logger.info('Selecting depth0..')
             var = var.sel(depth=0)
 
+        if 'height' in var.dims:
+            var = var.isel(height=0)
+
         if 'height0' in var.dims:
             var = var.isel(height0=0)
 
@@ -231,6 +234,12 @@ class Dataset:
 
         if 'height2' in var.dims:
             var = var.isel(height2=0)
+
+        if 'height3' in var.dims:
+            var = var.isel(height3=0)
+
+        if 'height4' in var.dims:
+            var = var.isel(height4=0)
 
         if 'ensemble_member' in var.dims:
             var = var.isel(ensemble_member=0)

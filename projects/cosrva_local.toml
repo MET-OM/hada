@@ -1,0 +1,88 @@
+# Fra NORA3:
+# [X] wind speed 10 m (m/s)
+# [X] air temperature 2m (°C)
+# [X] horizontal visibility (m) (based on temp and dew point)
+# [X] sea surface temperature (°C)
+# [X] sea ice concentration (fraction)
+#
+# Fra bølgemodellen (MyWaveWAM 3km):
+# [X] sign. wave height Hs (m)
+# [X] wave period Tz (s)
+# [X] wave direction (degree)
+#
+# Området som skal dekkes er hele Svalbard og gjerne med inntil 10 år med data (hver time).
+
+# Scalar variables
+scalar_variables = [
+  'wind',
+  'air_temperature',
+  'sea_temperature',
+  'ice_concentration',
+  'significant_wave_height',
+  # 'wave_peak_period',
+  'wave_peak_direction',
+]
+
+# Argument order must match input to calculating function.
+[derived_variables]
+horizontal_visibility_rh = [ 'relative_humidity' ]
+
+# Vector variables to read into a single magnitude scalar field.
+[vector_magnitude_variables]
+# wind = ["x_wind", "y_wind"]
+# current = ["x_sea_water", "y_sea_water"]
+
+# Prioritized list of datasets
+[datasets.nora3]
+# url = "https://thredds.met.no/thredds/dodsC/nora3agg/nora3hindcastaggregated.ncml"
+url = "/lustre/storeB/project/fou/om/NORA3/equinor/atm_hourly/*2019*.nc"
+proj4 = '+proj=lcc +lat_0=66.3 +lon_0=-42 +lat_1=66.3 +lat_2=66.3 +no_defs +R=6.371e+06'
+x = 'x'
+y = 'y'
+
+[datasets.nora3.variables]
+air_temperature = 'air_temperature_2m'
+wind = 'wind_speed'
+relative_humidity = 'relative_humidity_2m'
+
+[datasets.mywavewam]
+url = 'https://thredds.met.no/thredds/dodsC/windsurfer/mywavewam3km_agg/wam3kmhindcastaggregated.ncml'
+x = 'rlon'
+y = 'rlat'
+
+[datasets.mywavewam.variables]
+significant_wave_height = 'hs'
+# wave_peak_period = 'tp'
+wave_peak_direction = 'Pdir'
+
+# [datasets.era5_atm]
+# url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_202205.nc"
+# x = 'longitude'
+# y = 'latitude'
+# proj4 = '+proj=latlong'
+
+# [datasets.era5_atm.variables]
+# x_wind = 'u10'
+# y_wind = 'v10'
+
+[datasets.era5_sst]
+url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_2019*.nc"
+x = 'longitude'
+y = 'latitude'
+proj4 = '+proj=latlong'
+
+[datasets.era5_sst.variables]
+sea_temperature = 'sst'
+
+[datasets.era5_atm]
+url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_2019*.nc"
+x = 'longitude'
+y = 'latitude'
+proj4 = '+proj=latlong'
+
+[datasets.era5_atm.variables]
+ice_concentration = 'siconc'
+
+# [dataset.era5_wave]
+# url = "/lustre/storeB/project/fou/om/ERA/ERA5/wave"
+
