@@ -6,9 +6,9 @@
 # horizontal visibility (m) (based on temp and dew point)
 #
 # Fra bølgemodellen (MyWaveWAM 3km):
-# sign. wave height Hs (m)
-# wave period Tz (s)
-# wave direction (degree)
+# [X] sign. wave height Hs (m)
+# [X] wave period Tz (s)
+# [X] wave direction (degree)
 #
 # Området som skal dekkes er hele Svalbard og gjerne med inntil 10 år med data (hver time).
 
@@ -18,8 +18,8 @@ scalar_variables = [
   'sea_temperature',
   'ice_concentration',
   'significant_wave_height',
-  'wave_period',
-  'wave_direction',
+  'wave_peak_period',
+  'wave_peak_direction',
 ]
 
 # Argument order must match input to calculating function.
@@ -52,8 +52,8 @@ y = 'rlat'
 
 [datasets.mywavewam.variables]
 significant_wave_height = 'hs'
-wave_period = 'tp'
-wave_direction = 'Pdir'
+wave_peak_period = 'tp'
+wave_peak_direction = 'Pdir'
 
 # [datasets.era5_atm]
 # url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_atm_CDS_202205.nc"
