@@ -170,8 +170,8 @@ class Dataset:
         assert t_points.shape[0] == t_yn.shape[0]
         assert t_points.shape[0] == t_xn.shape[0]
 
-        t_xn.shape = target.xx.shape
-        t_yn.shape = target.yy.shape
+        t_xn.shape = sh
+        t_yn.shape = sh
 
         assert t_xn.shape == t_yn.shape
 
@@ -274,9 +274,10 @@ class Dataset:
 
         # Extract block
         x0 = np.min(target_x[inbounds]) - np.abs(self.dx)
-        x1 = np.max(target_x[inbounds]) + np.abs(self.dx)
+        x1 = np.max(target_x[inbounds]) + 2*np.abs(self.dx)
+
         y0 = np.min(target_y[inbounds]) - np.abs(self.dy)
-        y1 = np.max(target_y[inbounds]) + np.abs(self.dy)
+        y1 = np.max(target_y[inbounds]) + 2*np.abs(self.dy)
 
         swap_y = self.dy < 0
         swap_x = self.dx < 0
@@ -308,7 +309,7 @@ class Dataset:
 
         shape = list(block.shape)[:-2] + list(target_x.shape)
         shape = tuple(shape)
-        logger.debug(f'New shape: {shape}')
+        logger.debug(f'New shape: {shape} ({target_x.shape=})')
 
         vd = np.full(shape, np.nan, dtype=block.dtype)
         vd[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
