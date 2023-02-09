@@ -191,7 +191,7 @@ def test_regrid_wind_fallback(sourcetoml, tmpdir):
 @pytest.mark.skipif(
     not os.path.exists('/lustre/storeB/project/fou/om/ERA/ERA5/atm'),
     reason="dataset not accessible, skipping dependent tests")
-def test_era5_transform_points(tmpdir, plot):
+def test_era5_transform_points(tmpdir, baseline, plot):
     d = Dataset(
         "era5",
         "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202205.nc",
@@ -211,6 +211,9 @@ def test_era5_transform_points(tmpdir, plot):
     vo = d.regrid(d.ds['sst'], t, pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
 
+    bvo = xr.open_dataset(baseline / 'era5_sst_baseline.nc')
+    np.testing.assert_array_equal(bvo.sst, vo)
+
     if plot:
         ncrs = ccrs.Geodetic()
 
@@ -227,9 +230,9 @@ def test_era5_transform_points(tmpdir, plot):
         ex = ax.get_extent(crs=ccrs.Mercator())
 
         ax = plt.subplot(122, projection=ccrs.Mercator())
-        vo.plot(transform=t.cartopy_crs)
         ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-        ax.add_feature(land)
+        # ax.add_feature(land)
+        vo.plot(transform=t.cartopy_crs)
         ax.set_extent(ex, crs=ccrs.Mercator())
 
         plt.show()

@@ -2,6 +2,9 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+@pytest.fixture
+def baseline():
+    return Path(__file__).parent / 'data'
 
 @pytest.fixture
 def sourcetoml():
