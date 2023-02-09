@@ -219,19 +219,29 @@ class Dataset:
         Map x and y coordinate to index in X and Y.
         """
 
-        x0 = self.ds.X.values[0]
-        y0 = self.ds.Y.values[0]
+        if self.dx > 0:
+            x = x - self.xmin
+        else:
+            x = x - self.xmax
 
-        x = x - x0
-        y = y - y0
+        if self.dy > 0:
+            y = y - self.ymin
+        else:
+            y = y - self.ymax
 
-        txi = np.round(x / np.abs(self.dx)).astype(int)
-        tyi = np.round(y / np.abs(self.dy)).astype(int)
+        assert self.xmin == self.x.min()
+        assert self.ymin == self.y.min()
+
+        assert x.ravel().min() >= self.xmin
+        assert y.ravel().min() >= self.ymin
+
+        txi = np.round(x / self.dx).astype(int)
+        tyi = np.round(y / self.dy).astype(int)
+
+        assert txi.ravel().min() >= 0 and txi.ravel().max() <= len(self.x)
+        assert tyi.ravel().min() >= 0 and tyi.ravel().max() <= len(self.y)
 
         return txi, tyi
-
-    def __shift_to_block__(self, x, y, x0, y0):
-        return (x - x0), (y - y0)
 
     def __reduce_dimensions__(self, var):
         """
@@ -279,7 +289,7 @@ class Dataset:
 
         if not always_nearest:
             target_x, target_y, inbounds = self.__calculate_grid__(target)
-            tx, ty = self.__map_to_index__(target_x, target_y)
+            tx, ty = self.__map_to_index__(target_x[inbounds], target_y[inbounds])
         else:
             target_x, target_y, tx, ty, inbounds = self.__interpolate_nearest_valid_grid__(
                 target, var.name)
@@ -302,34 +312,22 @@ class Dataset:
         var = self.__reduce_dimensions__(var)
 
         # Extract block
-        x0 = np.min(tx[inbounds])
-        x1 = np.max(tx[inbounds]) + 1
-        y0 = np.min(ty[inbounds])
-        y1 = np.max(ty[inbounds]) + 1
+        x0 = np.min(tx)
+        x1 = np.max(tx) + 1
+        y0 = np.min(ty)
+        y1 = np.max(ty) + 1
 
-        # Shifted indices (XXX: is this flipped somehow when swap_*?)
-        tx, ty = self.__shift_to_block__(tx[inbounds], ty[inbounds], x0, y0)
+        # Shifted indices to block.
+        tx = tx - x0
+        ty = ty - y1
 
-        swap_y = y0 > y1
-        swap_x = x0 > x1
-        if swap_y:
-            logger.debug('y is decreasing, swapping direction.')
-            y1, y0 = y0, y1
-
-        if swap_x:
-            logger.debug('x is decreasing, swapping direction.')
-            x1, x0 = x0, x1
+        assert y1 > y0
+        assert x1 > x0
 
         logger.info(
             f'Load block for {len(time)} time steps between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
         )
         block = var.isel({self.x_v: slice(x0, x1), self.y_v: slice(y0, y1)}).load()
-
-        if swap_y:
-            block = block[..., ::-1, :]
-
-        if swap_x:
-            block = block[..., :, ::-1]
 
         logger.debug(f'Extracting values from block: {block.shape=}')
 

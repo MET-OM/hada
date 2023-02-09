@@ -1,3 +1,4 @@
+import pytest, os
 from pyproj import CRS
 from pytest import approx
 from hada.sources import *
@@ -30,6 +31,85 @@ def test_calculate_grid(tmpdir):
 
     print(tx, ty)
 
+def test_map_index_norkyst(tmpdir):
+    d = Dataset(
+        "norkyst",
+        "https://thredds.met.no/thredds/dodsC/sea/norkyst800m/1h/aggregate_be",
+        'X', 'Y', ['x_wind'])
+    t = Target.from_box(5, 10, 55, 60, 100, 100, tmpdir)
+
+    print("xb=", d.xmin, d.xmax)
+    print("yb=", d.ymin, d.ymax)
+
+    # Take a range from the coordinates and check if they match the indexes.
+
+    xi = np.arange(30, 156, 1).astype(int)
+    yi = np.arange(230, 354, 1).astype(int)
+
+    tx = d.x[xi]
+    ty = d.y[yi]
+
+    print("tx=", tx.min(), tx.max())
+    print("ty=", ty.min(), ty.max())
+
+    ttx, tty = d.__map_to_index__(tx, ty)
+
+    np.testing.assert_array_equal(xi, ttx)
+    np.testing.assert_array_equal(yi, tty)
+
+    # Negative range
+    xi = np.arange(30, 156, 1).astype(int)
+    yi = np.arange(354, 230, -1).astype(int)
+    tx = d.x[xi]
+    ty = d.y[yi]
+
+    ttx, tty = d.__map_to_index__(tx, ty)
+
+    np.testing.assert_array_equal(xi, ttx)
+    np.testing.assert_array_equal(yi, tty)
+
+
+@pytest.mark.skipif(
+    not os.path.exists('/lustre/storeB/project/fou/om/ERA/ERA5/atm'),
+    reason="dataset not accessible, skipping dependent tests")
+def test_map_index_era5(tmpdir):
+    d = Dataset(
+        "era5",
+        "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_202205.nc",
+        'longitude',
+        'latitude', ['sst'],
+        proj4='+proj=latlong')
+    t = Target.from_box(5, 10, 55, 60, 100, 100, tmpdir)
+
+    print("xb=", d.xmin, d.xmax)
+    print("yb=", d.ymin, d.ymax)
+
+    # Take a range from the coordinates and check if they match the indexes.
+
+    xi = np.arange(30, 156, 1).astype(int)
+    yi = np.arange(230, 354, 1).astype(int)
+
+    tx = d.x[xi]
+    ty = d.y[yi]
+
+    print("tx=", tx.min(), tx.max())
+    print("ty=", ty.min(), ty.max())
+
+    ttx, tty = d.__map_to_index__(tx, ty)
+
+    np.testing.assert_array_equal(xi, ttx)
+    np.testing.assert_array_equal(yi, tty)
+
+    # Negative range
+    xi = np.arange(30, 156, 1).astype(int)
+    yi = np.arange(354, 230, -1).astype(int)
+    tx = d.x[xi]
+    ty = d.y[yi]
+
+    ttx, tty = d.__map_to_index__(tx, ty)
+
+    np.testing.assert_array_equal(xi, ttx)
+    np.testing.assert_array_equal(yi, tty)
 
 def test_init_lonlat(tmpdir, plot):
     t = Target.from_lonlat(5, 10, 55, 60, 1000, 1000, tmpdir)

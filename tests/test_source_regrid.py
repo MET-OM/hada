@@ -10,7 +10,7 @@ import cartopy.crs as ccrs
 from shapely.geometry import box
 
 
-def test_norkyst_transform_points(tmpdir, plot):
+def test_norkyst_transform_points(tmpdir, baseline, plot):
     d = Dataset(
         "norkyst",
         "https://thredds.met.no/thredds/dodsC/sea/norkyst800m/1h/aggregate_be",
@@ -28,6 +28,11 @@ def test_norkyst_transform_points(tmpdir, plot):
 
     vo = d.regrid(d.ds['Uwind'], t, pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
+
+    # vo.to_netcdf(baseline / 'norkyst_w_baseline.nc')
+
+    bvo = xr.open_dataset(baseline / 'norkyst_w_baseline.nc')
+    np.testing.assert_array_equal(bvo.Uwind, vo)
 
     if plot:
         ncrs = ccrs.Stereographic(true_scale_latitude=60,
@@ -50,7 +55,7 @@ def test_norkyst_transform_points(tmpdir, plot):
         plt.show()
 
 
-def test_barents_transform_points(tmpdir, plot):
+def test_barents_transform_points(tmpdir, baseline, plot):
     d = Dataset(
         "barents",
         "https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be",
@@ -69,6 +74,10 @@ def test_barents_transform_points(tmpdir, plot):
     vo = d.regrid(d.ds['ice_concentration'], t,
                   pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
+    # vo.to_netcdf(baseline / 'barents_ic_baseline.nc')
+
+    bvo = xr.open_dataset(baseline / 'barents_ic_baseline.nc')
+    np.testing.assert_array_equal(bvo.ice_concentration, vo)
 
     bcrs = ccrs.LambertConformal(
         central_longitude=-25,
@@ -91,7 +100,7 @@ def test_barents_transform_points(tmpdir, plot):
         plt.show()
 
 
-def test_mywave_transform_points(tmpdir, plot):
+def test_mywave_transform_points(tmpdir, baseline, plot):
     d = Dataset(
         "barents",
         'https://thredds.met.no/thredds/dodsC/sea/mywavewam4/mywavewam4_be',
@@ -109,6 +118,11 @@ def test_mywave_transform_points(tmpdir, plot):
 
     vo = d.regrid(d.ds['hs'], t, pd.to_datetime("2022-11-06T02:00:00"))
     print(vo)
+
+    # vo.to_netcdf(baseline / 'mywave_hs_baseline.nc')
+
+    bvo = xr.open_dataset(baseline / 'mywave_hs_baseline.nc')
+    np.testing.assert_array_equal(bvo.hs, vo)
 
     import cartopy.feature as cfeature
     land = cfeature.GSHHSFeature(scale='auto',
@@ -210,6 +224,7 @@ def test_era5_transform_points(tmpdir, baseline, plot):
 
     vo = d.regrid(d.ds['sst'], t, pd.to_datetime("2022-05-06T02:00:00"))
     print(vo)
+    # vo.to_netcdf(baseline / 'era5_sst_baseline.nc')
 
     bvo = xr.open_dataset(baseline / 'era5_sst_baseline.nc')
     np.testing.assert_array_equal(bvo.sst, vo)
@@ -231,7 +246,7 @@ def test_era5_transform_points(tmpdir, baseline, plot):
 
         ax = plt.subplot(122, projection=ccrs.Mercator())
         ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
-        # ax.add_feature(land)
+        ax.add_feature(land)
         vo.plot(transform=t.cartopy_crs)
         ax.set_extent(ex, crs=ccrs.Mercator())
 
