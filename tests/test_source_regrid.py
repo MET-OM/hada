@@ -208,7 +208,7 @@ def test_era5_transform_points(tmpdir, baseline, plot):
     tbox = t.bbox
     t_crs = t.cartopy_crs
 
-    vo = d.regrid(d.ds['sst'], t, pd.to_datetime("2022-11-06T02:00:00"))
+    vo = d.regrid(d.ds['sst'], t, pd.to_datetime("2022-05-06T02:00:00"))
     print(vo)
 
     bvo = xr.open_dataset(baseline / 'era5_sst_baseline.nc')
