@@ -310,8 +310,8 @@ class Dataset:
         # Shifted indices (XXX: is this flipped somehow when swap_*?)
         tx, ty = self.__shift_to_block__(tx[inbounds], ty[inbounds], x0, y0)
 
-        swap_y = self.dy < 0
-        swap_x = self.dx < 0
+        swap_y = y0 > y1
+        swap_x = x0 > x1
         if swap_y:
             logger.debug('y is decreasing, swapping direction.')
             y1, y0 = y0, y1
