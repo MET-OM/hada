@@ -74,11 +74,11 @@ class Dataset:
             self.ds = xr.decode_cf(xr.open_dataset(url, decode_coords='all'))
 
         if x != 'X':
-            self.ds = self.ds.rename_dims({self.x_v: 'X'})
+            # self.ds = self.ds.rename_dims({self.x_v: 'X'})
             self.ds = self.ds.rename_vars({self.x_v: 'X'})
 
         if y != 'Y':
-            self.ds = self.ds.rename_dims({self.y_v: 'Y'})
+            # self.ds = self.ds.rename_dims({self.y_v: 'Y'})
             self.ds = self.ds.rename_vars({self.y_v: 'Y'})
 
         self.x = self.ds['X'].values
@@ -323,7 +323,7 @@ class Dataset:
         logger.info(
             f'Load block for {len(time)} time steps between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
         )
-        block = var.isel(X=slice(x0, x1), Y=slice(y0, y1)).load()
+        block = var.isel({self.x_v: slice(x0, x1), self.y_v: slice(y0, y1)}).load()
 
         if swap_y:
             block = block[..., ::-1, :]
