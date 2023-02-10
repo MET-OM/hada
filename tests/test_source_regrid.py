@@ -161,16 +161,12 @@ def test_regrid_ice_fallback_value(sourcetoml, tmpdir):
                           dataset_filter=('barents', ),
                           variable_filter=('ice_concentration', ))
 
-    t0 = datetime.utcnow() + timedelta(hours=1)
-    t1 = t0 + timedelta(hours=3)
-    time = pd.date_range(t0, t1, freq="1H")
-
-    ice = s.regrid('ice_concentration', t, time)
+    ice = s.regrid('ice_concentration', t, pd.to_datetime("2022-11-06T02:00:00"))
     assert ice is not None
     np.testing.assert_array_equal(ice.values, 0.0)
 
     s.fallback = {}
-    ice = s.regrid('ice_concentration', t, time)
+    ice = s.regrid('ice_concentration', t, pd.to_datetime("2022-11-06T02:00:00"))
     np.testing.assert_array_equal(ice.values, np.nan)
 
 

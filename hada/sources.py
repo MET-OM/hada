@@ -219,6 +219,9 @@ class Dataset:
         Map x and y coordinate to index in X and Y.
         """
 
+        if len(x) == 0 and len(y) == 0:
+            return x, y
+
         if self.dx > 0:
             x = x - self.xmin
         else:
