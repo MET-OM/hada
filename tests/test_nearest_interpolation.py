@@ -80,16 +80,19 @@ def test_nearest_valid_oob(tmpdir):
     print(tx, ty)
 
     tcx, tcy, ib = d.__calculate_grid__(t)
+    assert tcx.shape == (150, 100)
+    assert tcy.shape == (150, 100)
+    assert ib.shape == (150, 100)
 
     assert ib.ravel().any()
     assert not ib.ravel().all()
 
     txi, tyi = d.__map_to_index__(tx, ty)
-    tcxi, tcyi = d.__map_to_index__(tcx, tcy)
+    tcxi, tcyi = d.__map_to_index__(tcx[ib], tcy[ib])
 
     # Should not be the same
-    assert not np.allclose(tyi, tcyi, atol=1)
-    assert not np.allclose(txi, tcxi, atol=1)
+    assert not np.allclose(tyi[ib], tcyi, atol=1)
+    assert not np.allclose(txi[ib], tcxi, atol=1)
 
     # But the pixels inside the reader should be the same
     # np.testing.assert_allclose(txi[ib], tcxi[ib], atol=1)
