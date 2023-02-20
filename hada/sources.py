@@ -278,6 +278,32 @@ class Dataset:
 
         return var
 
+    def __time_nearest__(self, tp):
+        """
+        Find nearest index of time points.
+
+        Args:
+
+            xp  M   vector of time stamps
+
+        Returns:
+
+            ti      Vector of indices.
+        """
+        time = self.ds.time.values
+        ti = np.abs(time[:,None] - tp[None,:])
+        assert ti.shape == (len(time), len(tp))
+        ti = np.argmin(ti, axis=0)
+        assert ti.shape == (len(tp),)
+
+        dt = (self.ds.time.values[1] -
+              self.ds.time.values[0]) / np.timedelta64(1, 'h')
+        dtii = np.max(np.abs(time[ti] - tp)) / np.timedelta64(1, 'h')
+        if dtii >= 2 * dt:
+            logger.error("Time points more than two time-steps away from target values.")
+
+        return ti
+
     def regrid(self, var, target, time, always_nearest=False):
         """
         Return values for the target grid.
@@ -312,7 +338,10 @@ class Dataset:
                                                     var.time.values.min())
 
         logger.info('Selecting time slice..')
-        var = var.sel(time=time, method='nearest')
+
+        ti = self.__time_nearest__(time)
+        var = var.isel(time=ti)
+
         var = self.__reduce_dimensions__(var)
 
         # Extract block

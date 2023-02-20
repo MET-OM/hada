@@ -26,7 +26,8 @@ def test_norkyst_transform_points(tmpdir, baseline, plot):
     tbox = t.bbox
     t_crs = t.cartopy_crs
 
-    vo = d.regrid(d.ds['Uwind'], t, pd.to_datetime("2022-11-06T02:00:00"))
+    time = pd.date_range("2022-11-06T02:00:00", "2022-11-06T06:00:00", freq='1H')
+    vo = d.regrid(d.ds['Uwind'], t, time)
     print(vo)
 
     # vo.to_netcdf(baseline / 'norkyst_w_baseline.nc')
@@ -71,8 +72,8 @@ def test_barents_transform_points(tmpdir, baseline, plot):
     tbox = t.bbox
     t_crs = t.cartopy_crs
 
-    vo = d.regrid(d.ds['ice_concentration'], t,
-                  pd.to_datetime("2022-11-06T02:00:00"))
+    time = pd.date_range("2022-11-06T02:00:00", "2022-11-06T06:00:00", freq='1H')
+    vo = d.regrid(d.ds['ice_concentration'], t, time)
     print(vo)
     # vo.to_netcdf(baseline / 'barents_ic_baseline.nc')
 
@@ -116,7 +117,8 @@ def test_mywave_transform_points(tmpdir, baseline, plot):
     tbox = t.bbox
     t_crs = t.cartopy_crs
 
-    vo = d.regrid(d.ds['hs'], t, pd.to_datetime("2022-11-06T02:00:00"))
+    time = pd.date_range("2022-11-06T02:00:00", "2022-11-06T06:00:00", freq='1H')
+    vo = d.regrid(d.ds['hs'], t, time)
     print(vo)
 
     # vo.to_netcdf(baseline / 'mywave_hs_baseline.nc')
@@ -218,7 +220,8 @@ def test_era5_transform_points(tmpdir, baseline, plot):
     tbox = t.bbox
     t_crs = t.cartopy_crs
 
-    vo = d.regrid(d.ds['sst'], t, pd.to_datetime("2022-05-06T02:00:00"))
+    time = pd.date_range("2022-05-06T02:00:00", "2022-05-06T06:00:00", freq='1H')
+    vo = d.regrid(d.ds['sst'], t, time)
     print(vo)
     # vo.to_netcdf(baseline / 'era5_sst_baseline.nc')
 
