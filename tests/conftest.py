@@ -15,6 +15,10 @@ def cosrvatoml():
     return Path(__file__).parent.parent / 'projects' / 'cosrva.toml'
 
 @pytest.fixture
+def cosrva_local_toml():
+    return Path(__file__).parent.parent / 'projects' / 'cosrva_local.toml'
+
+@pytest.fixture
 def runner():
     return CliRunner()
 

@@ -222,6 +222,12 @@ class Dataset:
         if len(x) == 0 and len(y) == 0:
             return x, y
 
+        assert self.xmin == self.x.min()
+        assert self.ymin == self.y.min()
+
+        assert x.ravel().min() >= self.xmin
+        assert y.ravel().min() >= self.ymin
+
         if self.dx > 0:
             x = x - self.xmin
         else:
@@ -231,12 +237,6 @@ class Dataset:
             y = y - self.ymin
         else:
             y = y - self.ymax
-
-        assert self.xmin == self.x.min()
-        assert self.ymin == self.y.min()
-
-        assert x.ravel().min() >= self.xmin
-        assert y.ravel().min() >= self.ymin
 
         txi = np.round(x / self.dx).astype(int)
         tyi = np.round(y / self.dy).astype(int)
@@ -292,7 +292,8 @@ class Dataset:
 
         if not always_nearest:
             target_x, target_y, inbounds = self.__calculate_grid__(target)
-            tx, ty = self.__map_to_index__(target_x[inbounds], target_y[inbounds])
+            tx, ty = self.__map_to_index__(target_x[inbounds],
+                                           target_y[inbounds])
         else:
             target_x, target_y, tx, ty, inbounds = self.__interpolate_nearest_valid_grid__(
                 target, var.name)
@@ -330,7 +331,10 @@ class Dataset:
         logger.info(
             f'Load block for {len(time)} time steps between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
         )
-        block = var.isel({self.x_v: slice(x0, x1), self.y_v: slice(y0, y1)}).load()
+        block = var.isel({
+            self.x_v: slice(x0, x1),
+            self.y_v: slice(y0, y1)
+        }).load()
 
         logger.debug(f'Extracting values from block: {block.shape=}')
 
