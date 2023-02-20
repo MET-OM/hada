@@ -14,7 +14,7 @@ def hor_vis(rh, fog):
         logger.warning('horizontal visibilty: rh or fog completely nan filled, setting to NaN')
         return xr.DataArray(np.full(rh.shape, np.nan), dims=rh.dims)
 
-    assert np.nanmax(fog) <= 1.0 and np.nanmin(fog) >= 0.0, "fog fraction must be number between 0 and 1"
+    # assert np.nanmax(fog) <= 1.0 and np.nanmin(fog) >= 0.0, "fog fraction must be number between 0 and 1"
 
     # rh can be over-saturated, i.e.: more than 1.
     # assert rh.max() <= 1.0 and rh.min() >= 0.0, "relative humidity must be number between 0 and 1"
