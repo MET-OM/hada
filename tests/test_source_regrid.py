@@ -250,3 +250,63 @@ def test_era5_transform_points(tmpdir, baseline, plot):
         ax.set_extent(ex, crs=ccrs.Mercator())
 
         plt.show()
+
+def test_arome_arctic_transform_points(tmpdir, baseline, plot):
+    d = Dataset(
+        "arome_arctic",
+        "https://thredds.met.no/thredds/dodsC/aromearcticarchive/2023/02/22/arome_arctic_det_2_5km_20230222T00Z.nc",
+        'x', 'y', ['x_wind_10m'])
+
+    v = d.ds['x_wind_10m'].sel(time="2023-02-22T02:00:00", method='nearest').isel(height7=0)
+    print(v)
+    assert d.ds.rio.crs is not None
+    assert np.any(np.isfinite(v))
+
+    ## Try to get some values and check if they end up where they should.
+    t = Target.from_lonlat(10, 20, 67, 70, 100, 100, tmpdir)
+
+    tbox = t.bbox
+    t_crs = t.cartopy_crs
+
+    time = pd.date_range("2023-02-22T02:00:00", "2023-02-22T06:00:00", freq='1H')
+    vo = d.regrid(d.ds['x_wind_10m'], t, time)
+    assert vo is not None
+    print(vo)
+
+    # vo.to_netcdf(baseline / 'arome_arctic_w_baseline.nc')
+
+    bvo = xr.open_dataset(baseline / 'arome_arctic_w_baseline.nc')
+    np.testing.assert_array_equal(bvo.x_wind_10m, vo)
+
+    if plot:
+        bcrs = ccrs.LambertConformal(
+            central_longitude=-25,
+            central_latitude=77.5,
+            standard_parallels=(77.5, 77.5),
+        )
+
+        plt.figure()
+        plt.imshow(v)
+
+        plt.figure()
+        ax = plt.subplot(121, projection=ccrs.Mercator())
+        v.plot(transform=bcrs)
+        ex = ax.get_extent(crs=ccrs.Mercator())
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        ax.set_extent(ex, crs=ccrs.Mercator())
+        # ex = ax.get_extent(crs=ccrs.Mercator())
+
+        ax = plt.subplot(122, projection=ccrs.Mercator())
+        vo[0,...].plot(transform=t.cartopy_crs)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+
+        import cartopy.feature as cfeature
+        land = cfeature.GSHHSFeature(scale='auto',
+                                     edgecolor='black',
+                                     facecolor=cfeature.COLORS['land'],
+                                     alpha=.5)
+        ax.add_feature(land)
+
+       # ax.set_extent(ex, crs=ccrs.Mercator())
+
+        plt.show()

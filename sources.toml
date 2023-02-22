@@ -66,6 +66,18 @@ y = 'rlat'
 [datasets.mywavewam4.variables]
 significant_wave_height = 'hs'
 
+[datasets.arome_arctic]
+url = "https://thredds.met.no/thredds/dodsC/aromearcticlatest/latest/arome_arctic_lagged_12_h_latest_2_5km_latest.nc"
+x = 'x'
+y = 'y'
+
+[datasets.arome_arctic.variables]
+fog = 'fog_area_fraction'
+relative_humidity = 'relative_humidity_2m'
+x_wind = 'x_wind_10m'
+y_wind = 'y_wind_10m'
+air_temperature = 'air_temperature_2m'
+
 [datasets.meps]
 url = "https://thredds.met.no/thredds/dodsC/mepslatest/meps_lagged_6_h_latest_2_5km_latest.nc"
 x = 'x'
