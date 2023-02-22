@@ -84,18 +84,18 @@ class Dataset:
         self.x = self.ds['X'].values
         self.y = self.ds['Y'].values
 
-        self.dx = self.x[1] - self.x[0]
-        self.dy = self.y[1] - self.y[0]
+        self.dx = np.mean(np.diff(self.x))
+        self.dy = np.mean(np.diff(self.y))
 
         self.xmin, self.xmax = self.x.min(), self.x.max()
         self.ymin, self.ymax = self.y.min(), self.y.max()
 
-        if not all(np.diff(self.x) - self.dx == 0):
+        if not all(np.abs(np.diff(self.x) - self.dx) < 1e-3):
             logger.error(
                 f'X coordinate not monotonic, max deviation from dx: {np.max(np.diff(self.x)-self.dx)}'
             )
 
-        if not all(np.diff(self.y) - self.dy == 0):
+        if not all(np.abs(np.diff(self.y) - self.dy) < 1e-3):
             logger.error(
                 f'Y coordinate not monotonic, max deviation from dy: {np.max(np.diff(self.y)-self.dy)}'
             )
@@ -252,7 +252,6 @@ class Dataset:
         """
         logger.debug(f'Reducing dimensions for {var.name}..')
         if 'depth' in var.dims:
-            logger.info('Selecting depth0..')
             var = var.sel(depth=0)
 
         if 'height' in var.dims:
@@ -300,7 +299,7 @@ class Dataset:
               self.ds.time.values[0]) / np.timedelta64(1, 'h')
         dtii = np.max(np.abs(time[ti] - tp)) / np.timedelta64(1, 'h')
         if dtii >= 2 * dt:
-            logger.error("Time points more than two time-steps away from target values.")
+            logger.error(f"Time points more than two time-steps away from target values: 2*{dt=} < max(dti)={dtii}.")
 
         return ti
 
@@ -314,7 +313,7 @@ class Dataset:
         time = np.atleast_1d(time)
 
         logger.info(
-            f'Regridding {var} between {np.min(time)} and {np.max(time)}')
+            f'Regridding {var.name} between {np.min(time)} and {np.max(time)}')
 
         if not always_nearest:
             target_x, target_y, inbounds = self.__calculate_grid__(target)
@@ -336,12 +335,15 @@ class Dataset:
         # Calculate invalid time steps before selecting time.
         invalid = (time > var.time.values.max()) | (time <
                                                     var.time.values.min())
+        if np.any(invalid):
+            logger.warning(f'Target-time [{np.sum(invalid)}/{len(invalid)} steps] is outside the time-domain of the dataset.')
 
-        logger.info('Selecting time slice..')
+        logger.debug('Selecting time slice..')
 
-        ti = self.__time_nearest__(time)
+        ti = self.__time_nearest__(time[~invalid])
+        assert len(ti) == np.sum(~invalid)
+
         var = var.isel(time=ti)
-
         var = self.__reduce_dimensions__(var)
 
         # Extract block
@@ -374,12 +376,9 @@ class Dataset:
         vd = np.full(shape, np.nan, dtype=block.dtype)
         vd[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
-        # Fill invalid times with nans
-        vd[invalid, ...] = np.nan
-
-        # Construct new coordinates
+        # Construct new variable and fill with data.
         vo = setup_variable(var.name, target, time, block.dtype, var.attrs)
-        vo.values[:] = vd
+        vo.values[~invalid, ...] = vd
 
         vo.attrs['source'] = self.url
         vo.attrs['source_name'] = self.name
