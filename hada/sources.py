@@ -84,8 +84,8 @@ class Dataset:
         self.x = self.ds['X'].values
         self.y = self.ds['Y'].values
 
-        self.dx = np.mean(np.diff(self.x))
-        self.dy = np.mean(np.diff(self.y))
+        self.dx = np.median(np.diff(self.x))
+        self.dy = np.median(np.diff(self.y))
 
         self.xmin, self.xmax = self.x.min(), self.x.max()
         self.ymin, self.ymax = self.y.min(), self.y.max()
