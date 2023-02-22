@@ -272,6 +272,15 @@ class Dataset:
         if 'height4' in var.dims:
             var = var.isel(height4=0)
 
+        if 'height5' in var.dims:
+            var = var.isel(height5=0)
+
+        if 'height6' in var.dims:
+            var = var.isel(height6=0)
+
+        if 'height7' in var.dims:
+            var = var.isel(height7=0)
+
         if 'ensemble_member' in var.dims:
             var = var.isel(ensemble_member=0)
 
