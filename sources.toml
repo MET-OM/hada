@@ -52,8 +52,8 @@ y = 'Y'
 
 [datasets.barents.variables]
 ice_concentration = 'ice_concentration'
-x_sea_water = 'u'
-y_sea_water = 'v'
+x_sea_water = 'u_eastward'
+y_sea_water = 'v_northward'
 sea_temperature = 'temperature'
 x_wind = 'Uwind'
 y_wind = 'Vwind'
