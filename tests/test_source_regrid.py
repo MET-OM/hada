@@ -27,13 +27,13 @@ def test_norkyst_transform_points(tmpdir, baseline, plot):
     t_crs = t.cartopy_crs
 
     time = pd.date_range("2022-11-06T02:00:00", "2022-11-06T06:00:00", freq='1H')
+    # time = pd.to_datetime("2022-11-06T02:00:00")
     vo = d.regrid(d.ds['Uwind'], t, time)
     print(vo)
 
     # vo.to_netcdf(baseline / 'norkyst_w_baseline.nc')
 
     bvo = xr.open_dataset(baseline / 'norkyst_w_baseline.nc')
-    np.testing.assert_array_equal(bvo.Uwind, vo)
 
     if plot:
         ncrs = ccrs.Stereographic(true_scale_latitude=60,
@@ -49,11 +49,13 @@ def test_norkyst_transform_points(tmpdir, baseline, plot):
         ex = ax.get_extent(crs=ccrs.Mercator())
 
         ax = plt.subplot(122, projection=ccrs.Mercator())
-        vo.plot(transform=t.cartopy_crs)
+        vo.isel(time=0).plot(transform=t.cartopy_crs)
         ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
         ax.set_extent(ex, crs=ccrs.Mercator())
 
         plt.show()
+
+    np.testing.assert_array_equal(bvo.Uwind, vo)
 
 
 def test_barents_transform_points(tmpdir, baseline, plot):
