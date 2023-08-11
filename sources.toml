@@ -58,12 +58,12 @@ sea_temperature = 'temperature'
 x_wind = 'Uwind'
 y_wind = 'Vwind'
 
-[datasets.mywavewam4]
-url = 'https://thredds.met.no/thredds/dodsC/sea/mywavewam4/mywavewam4_be'
+[datasets.ww3_4km]
+url = 'https://thredds.met.no/thredds/dodsC/ww3_4km_agg'
 x = 'rlon'
 y = 'rlat'
 
-[datasets.mywavewam4.variables]
+[datasets.ww3_4km.variables]
 significant_wave_height = 'hs'
 
 [datasets.arome_arctic]

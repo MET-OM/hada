@@ -312,3 +312,60 @@ def test_arome_arctic_transform_points(tmpdir, baseline, plot):
        # ax.set_extent(ex, crs=ccrs.Mercator())
 
         plt.show()
+
+def test_ww3_4km_transform_points(tmpdir, baseline, plot):
+    d = Dataset(
+        "ww3_4km",
+        'https://thredds.met.no/thredds/dodsC/ww3_4km_agg',
+        'rlon', 'rlat', ['hs'])
+    assert d.ds.rio.crs is not None
+    print(repr(d.crs))
+
+    v = d.ds['hs'].sel(time="2023-08-11T03:00:00")
+    print(v)
+
+    ## Try to get some values and check if they end up where they should.
+    t = Target.from_lonlat(5, 10, 55, 60, 100, 100, tmpdir)
+    tbox = t.bbox
+    t_crs = t.cartopy_crs
+
+    # time = pd.date_range("2023-08-11T03:00:00", "2022-11-06T05:00:00", freq='1H')
+    time = pd.to_datetime("2023-08-11T03:00:00")
+    vo = d.regrid(d.ds['hs'], t, time)
+    print(vo)
+
+    # vo.to_netcdf(baseline / 'ww3_4km_hs_baseline.nc')
+
+    bvo = xr.open_dataset(baseline / 'ww3_4km_hs_baseline.nc')
+
+    import cartopy.feature as cfeature
+    land = cfeature.GSHHSFeature(scale='auto',
+                                 edgecolor='black',
+                                 facecolor=cfeature.COLORS['land'])
+
+    # import pyresample as pr
+    # adef, _  = pr.utils.load_cf_area(d.ds)
+    # print(adef)
+
+    # mcrs = ccrs.RotatedPole(
+    #     pole_longitude=140.,
+    #     pole_latitude=22.,
+    # )
+
+    if plot:
+        plt.figure()
+        # ax = plt.subplot(121, projection=ccrs.Mercator())
+        # v.plot(transform=mcrs)
+        # ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        # ax.add_feature(land)
+        # ex = ax.get_extent(crs=ccrs.Mercator())
+
+        ax = plt.subplot(111, projection=ccrs.Mercator())
+        vo.plot(transform=t.cartopy_crs)
+        ax.add_feature(land)
+        ax.plot(*tbox.exterior.xy, '-x', transform=t_crs, label='target box')
+        # ax.set_extent(ex, crs=ccrs.Mercator())
+
+        plt.show()
+
+    np.testing.assert_array_equal(bvo.hs, vo)
