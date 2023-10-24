@@ -123,7 +123,7 @@ class Dataset:
         return f'<Dataset ({self.name} / {self.url})>'
 
     @cache
-    def __interpolate_nearest_valid_grid__(self, target, var: str):
+    def __interpolate_nearest_valid_grid__(self, target, var: str, timei=-1):
         """
         Find the closest point with a value regardless of how far away the point
         is from a valid point. E.g. a point in the middle of land will get its
@@ -142,8 +142,8 @@ class Dataset:
         var = self.ds[var]
         var = self.__reduce_dimensions__(var)
         var = var.isel(
-            time=-1
-        )  # XXX: This whole algorithm will fail if somehow the valid points change with the time dimension.
+            time=timei
+        )  # XXX: This whole algorithm will fail if somehow the valid points change with the time dimension, and that is not accounted for.
 
         valid = np.isfinite(var.values)
         assert valid.any(
@@ -324,18 +324,6 @@ class Dataset:
         logger.info(
             f'Regridding {var.name} between {np.min(time)} and {np.max(time)}')
 
-        if not always_nearest:
-            target_x, target_y, inbounds = self.__calculate_grid__(target)
-            tx, ty = self.__map_to_index__(target_x[inbounds],
-                                           target_y[inbounds])
-        else:
-            target_x, target_y, tx, ty, inbounds = self.__interpolate_nearest_valid_grid__(
-                target, var.name)
-
-        if not any(inbounds.ravel()):
-            logger.warning('Target is outside the domain of this reader')
-            return None
-
         if np.min(time) > var.time[-1] or np.max(time) < var.time[0]:
             logger.warning(
                 'Target time is outside the time span of this reader')
@@ -355,44 +343,88 @@ class Dataset:
         var = var.isel(time=ti)
         var = self.__reduce_dimensions__(var)
 
-        # Extract block
-        x0 = np.min(tx)
-        x1 = np.max(tx) + 1
-        y0 = np.min(ty)
-        y1 = np.max(ty) + 1
-
-        # Shifted indices to block.
-        tx = tx - x0
-        ty = ty - y1
-
-        assert y1 > y0
-        assert x1 > x0
-
-        logger.info(
-            f'Load block for {len(time)} time steps between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
-        )
-        block = var.isel({
-            self.x_v: slice(x0, x1),
-            self.y_v: slice(y0, y1)
-        }).load()
-
-        logger.debug(f'Extracting values from block: {block.shape=}')
-
-        shape = list(block.shape)[:-2] + list(target_x.shape)
+        shape = list(var.shape)[:-2] + list(target.xx.shape)
         shape = tuple(shape)
-        logger.debug(f'New shape: {shape} ({target_x.shape=})')
+        logger.debug(f'New shape: {shape} ({target.xx.shape=})')
 
-        vd = np.full(shape, np.nan, dtype=block.dtype)
-        vd[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
+        vd = np.full(shape, np.nan, dtype=var.dtype)
+
+        if not always_nearest:
+            target_x, target_y, inbounds = self.__calculate_grid__(target)
+            tx, ty = self.__map_to_index__(target_x[inbounds],
+                                           target_y[inbounds])
+
+            if not any(inbounds.ravel()):
+                logger.warning('Target is outside the domain of this reader')
+                return None
+
+            # Extract block
+            x0 = np.min(tx)
+            x1 = np.max(tx) + 1
+            y0 = np.min(ty)
+            y1 = np.max(ty) + 1
+
+            # Shifted indices to block.
+            tx = tx - x0
+            ty = ty - y1
+
+            assert y1 > y0
+            assert x1 > x0
+
+            logger.info(
+                f'Load block for {len(time)} time steps between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
+            )
+
+            block = var.isel({
+                self.x_v: slice(x0, x1),
+                self.y_v: slice(y0, y1)
+            }).load()
+
+            logger.debug(f'Extracting values from block: {block.shape=}')
+            vd[..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
+        else:
+            # we must loop over time, because the valid grid cells may change in each time step (e.g. due to sea ice)
+            assert shape[0] == len(ti), "expected time dimension to be first"
+            for tii in ti:
+                target_x, target_y, tx, ty, inbounds = self.__interpolate_nearest_valid_grid__(
+                    target, var.name, tii)
+
+                if not any(inbounds.ravel()):
+                    logger.warning('Target is outside the domain of this reader')
+                    return None
+
+                # Extract block
+                x0 = np.min(tx)
+                x1 = np.max(tx) + 1
+                y0 = np.min(ty)
+                y1 = np.max(ty) + 1
+
+                # Shifted indices to block.
+                tx = tx - x0
+                ty = ty - y1
+
+                assert y1 > y0
+                assert x1 > x0
+
+                logger.info(
+                    f'Load block for time step {tii} between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
+                )
+
+                block = var.isel({
+                    'time' : tii,
+                    self.x_v: slice(x0, x1),
+                    self.y_v: slice(y0, y1)
+                }).load()
+
+                logger.debug(f'Extracting values from block using nearest valid point: {block.shape=}')
+                vd[tii, ..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
         # Construct new variable and fill with data.
-        vo = setup_variable(var.name, target, time, block.dtype, var.attrs)
+        vo = setup_variable(var.name, target, time, var.dtype, var.attrs)
         vo.values[~invalid, ...] = vd
 
         vo.attrs['source'] = self.url
         vo.attrs['source_name'] = self.name
-
-        logger.debug(f'Block ({block.shape}) -> vo ({vo.shape})')
 
         return vo
 
