@@ -70,7 +70,7 @@ def test_nearest_valid_oob(tmpdir):
     # XXX: Completely in the ocean, but passing outside the end of the reader.
     # 59.725278, 3.872345
     # 60.081193, 4.574901
-    tx, ty, _, _, i = d.__interpolate_nearest_valid_grid__(t, 'Uwind')
+    tx, ty, _, _, i = d.__interpolate_nearest_valid_grid__(t, 'Uwind', max_dist=10000.e3)
 
     assert i.ravel().all()
 
