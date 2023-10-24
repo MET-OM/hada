@@ -130,7 +130,7 @@ class Dataset:
         value from the closest ocean point.
         """
 
-        logger.info(
+        logger.debug(
             f'Finding nearest valid grid points (with data) for _all_ target points in {var}..'
         )
 
@@ -371,10 +371,6 @@ class Dataset:
             assert y1 > y0
             assert x1 > x0
 
-            logger.info(
-                f'Load block for {len(time)} time steps between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
-            )
-
             block = var.isel({
                 self.x_v: slice(x0, x1),
                 self.y_v: slice(y0, y1)
@@ -385,6 +381,11 @@ class Dataset:
         else:
             # we must loop over time, because the valid grid cells may change in each time step (e.g. due to sea ice)
             assert shape[0] == len(ti), "expected time dimension to be first"
+
+            logger.info(
+                f'Load block for {len(time)} time steps'
+            )
+
             for tii in ti:
                 target_x, target_y, tx, ty, inbounds = self.__interpolate_nearest_valid_grid__(
                     target, var.name, tii)
@@ -406,18 +407,16 @@ class Dataset:
                 assert y1 > y0
                 assert x1 > x0
 
-                logger.info(
-                    f'Load block for time step {tii} between x: {x0}..{x1}/{self.dx}, y: {y0}..{y1}/{self.dy}'
-                )
-
                 block = var.isel({
-                    'time' : tii,
+                    'time' : tii-ti[0],
                     self.x_v: slice(x0, x1),
                     self.y_v: slice(y0, y1)
                 }).load()
 
+                assert len(block.shape) == len(vd.shape)
+
                 logger.debug(f'Extracting values from block using nearest valid point: {block.shape=}')
-                vd[tii, ..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
+                vd[tii-ti[0], ..., inbounds] = block.values[..., ty.ravel(), tx.ravel()]
 
         # Construct new variable and fill with data.
         vo = setup_variable(var.name, target, time, var.dtype, var.attrs)

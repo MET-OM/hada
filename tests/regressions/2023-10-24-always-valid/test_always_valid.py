@@ -3,7 +3,10 @@ from hada.cli import hada
 import os.path, os, subprocess
 import xarray as xr
 import numpy as np
+import sys
+import pytest
 
+@pytest.mark.skipif(sys.platform != 'linux', reason='need linux utils')
 def test_always_valid_hs(test_dir, tmpdir, runner):
     with runner.isolated_filesystem(temp_dir=tmpdir) as td:
         td = Path(td)
