@@ -33,7 +33,7 @@ def test_horizontal_vis_meps_tdta():
     rh = ds.relative_humidity_2m.isel(height0=0, ensemble_member=0).isel(x=slice(0, 10000), y=slice(0,10000))
     td = ta - ((100 - rh*100)/5.)
 
-    vv = hor_vis_tdta(td, ta)
+    vv = hor_vis_tdta_C(td, ta)
     print(vv)
 
 
