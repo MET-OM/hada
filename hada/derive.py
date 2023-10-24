@@ -43,7 +43,7 @@ def hor_vis_rh(rh):
     return vv
 
 
-def hor_vis_tdta(dew_point_temp, air_temp):
+def hor_vis_tdta_C(dew_point_temp, air_temp):
     """
     Calculate visibilty based on dew point temp and air temp.
 
@@ -63,14 +63,19 @@ def hor_vis_tdta(dew_point_temp, air_temp):
 
     return vs
 
+def hor_vis_tdta_K(dew_point_temp, air_temp):
+    return hor_vis_tdta_C(dew_point_temp - 237.5, air_temp - 237.5)
+
 
 def derive(var, *args):
     if var == 'horizontal_visibility':
         return hor_vis(*args)
     elif var == 'horizontal_visibility_rh':
         return hor_vis_rh(*args)
-    elif var == 'horizontal_visibility_dew':
-        return hor_vis_tdta(*args)
+    elif var == 'horizontal_visibility_dew_C':
+        return hor_vis_tdta_C(*args)
+    elif var == 'horizontal_visibility_dew_K':
+        return hor_vis_tdta_K(*args)
     else:
         raise ValueError(f"Unknown derived variable: {var}")
 
