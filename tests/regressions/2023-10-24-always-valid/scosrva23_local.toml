@@ -1,0 +1,62 @@
+# Fra NORA3:
+# [X] wind speed 10 m (m/s)
+# [X] air temperature 2m (°C)
+# [X] horizontal visibility (m) (based on temp and dew point)
+# [X] sea surface temperature (°C)
+# [X] sea ice concentration (fraction)
+#
+# Fra bølgemodellen (MyWaveWAM 3km):
+# [X] sign. wave height Hs (m)
+# [X] wave period Tz (s)
+# [X] wave direction (degree)
+#
+# Området som skal dekkes er hele Svalbard og gjerne med inntil 10 år med data (hver time).
+
+# Scalar variables Angir hvilke variable som er output
+scalar_variables = [
+#  'wind',
+  'air_temperature',
+  'sea_temperature',
+  'ice_concentration',
+  'significant_wave_height',
+#  'dewpoint_temp_2m',
+  # 'wave_peak_period',
+#  'wave_peak_direction',
+]
+
+# Argument order must match input to calculating function.
+[derived_variables]
+#horizontal_visibility_rh = [ 'relative_humidity' ]
+horizontal_visibility_dew = [ 'dewpoint_temp_2m','air_temperature' ]
+
+# Vector variables to read into a single magnitude scalar field.
+[vector_magnitude_variables]
+wind = ["x_wind", "y_wind"]
+#current = ["x_sea_water", "y_sea_water"]
+
+# Prioritized list of datasets
+
+[datasets.era5_sst]
+#url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_2019*.nc"
+url = "D:/Met/hada-main/tests/data/ERA5_2022.nc"
+x = 'longitude'
+y = 'latitude'
+proj4 = '+proj=latlong'
+
+[datasets.era5_sst.variables]	
+sea_temperature = 'sst'
+x_wind = 'u10'
+y_wind = 'v10'
+air_temperature = 't2m'
+ice_concentration = 'siconc'
+#significant_wave_height = 'swh'
+dewpoint_temp_2m = 'd2m'
+
+[datasets.era5_Hs]
+url = "D:/Met/hada-main/tests/data/ERA5_swh_2022.nc"
+x = 'longitude'
+y = 'latitude'
+proj4 = '+proj=latlong'
+
+[datasets.era5_Hs.variables]	
+significant_wave_height = 'swh'

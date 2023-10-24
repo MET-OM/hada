@@ -7,6 +7,10 @@ def baseline():
     return Path(__file__).parent / 'data'
 
 @pytest.fixture
+def test_dir():
+    return Path(__file__).parent
+
+@pytest.fixture
 def sourcetoml():
     return Path(__file__).parent.parent / 'sources.toml'
 
