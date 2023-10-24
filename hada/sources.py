@@ -123,7 +123,7 @@ class Dataset:
         return f'<Dataset ({self.name} / {self.url})>'
 
     @cache
-    def __interpolate_nearest_valid_grid__(self, target, var: str, timei=-1):
+    def __interpolate_nearest_valid_grid__(self, target, var: str, timei=-1, max_dist=100.e3):
         """
         Find the closest point with a value regardless of how far away the point
         is from a valid point. E.g. a point in the middle of land will get its
@@ -166,7 +166,7 @@ class Dataset:
 
         assert t_points.shape[1] == 2
 
-        _dist, idx = t.query(t_points, k=1)  # New targets.
+        dist, idx = t.query(t_points, k=1)  # New targets.
         t_xn = x[idx]
         t_yn = y[idx]
 
@@ -188,9 +188,7 @@ class Dataset:
         assert t_xn.shape == t_yn.shape
         assert ti_xn.shape == t_yn.shape
 
-        inbounds = np.full(
-            t_xn.shape, True
-        )  # There will always be a valid value now. Consider making this optional.
+        inbounds = dist<=max_dist
 
         return t_xn, t_yn, ti_xn, ti_yn, inbounds
 
