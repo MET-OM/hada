@@ -38,12 +38,12 @@ wind = ["x_wind", "y_wind"]
 
 [datasets.era5_sst]
 #url = "/lustre/storeB/project/fou/om/ERA/ERA5/atm/era5_sst_CDS_2019*.nc"
-url = "D:/Met/hada-main/tests/data/ERA5_2022.nc"
+url = "/tmp/hada/2023-10-24/era1.nc"
 x = 'longitude'
 y = 'latitude'
 proj4 = '+proj=latlong'
 
-[datasets.era5_sst.variables]	
+[datasets.era5_sst.variables]
 sea_temperature = 'sst'
 x_wind = 'u10'
 y_wind = 'v10'
@@ -53,10 +53,10 @@ ice_concentration = 'siconc'
 dewpoint_temp_2m = 'd2m'
 
 [datasets.era5_Hs]
-url = "D:/Met/hada-main/tests/data/ERA5_swh_2022.nc"
+url = "/tmp/hada/2023-10-24/era2.nc"
 x = 'longitude'
 y = 'latitude'
 proj4 = '+proj=latlong'
 
-[datasets.era5_Hs.variables]	
+[datasets.era5_Hs.variables]
 significant_wave_height = 'swh'
