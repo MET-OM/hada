@@ -7,7 +7,8 @@ logger = logging.getLogger(__name__)
 
 
 class Target:
-    epsg = 3575
+    DEFAULT_EPSG = 3575
+    epsg = DEFAULT_EPSG
     crs = pyproj.CRS.from_epsg(epsg)
 
     proj_name = 'target_proj'
@@ -42,18 +43,20 @@ class Target:
 
         return v
 
-    def __init__(self, output):
+    def __init__(self, output, epsg = DEFAULT_EPSG):
         self.output = output
+        self.epsg = epsg
+        self.crs = pyproj.CRS.from_epsg(self.epsg)
 
     @staticmethod
-    def from_box(xmin, xmax, ymin, ymax, nx, ny, output):
+    def from_box(xmin, xmax, ymin, ymax, nx, ny, output, epsg):
         """
         Args:
 
             xmin, ...: bounding box in target grid coordinates.
             nx, ny: grid cells
         """
-        t = Target(output)
+        t = Target(output, epsg)
         t.xmin, t.xmax, t.ymin, t.ymax = xmin, xmax, ymin, ymax
         t.nx, t.ny = nx, ny
 
@@ -78,7 +81,7 @@ class Target:
         return ccrs.epsg(self.epsg)
 
     @staticmethod
-    def from_gridfile(fname, output):
+    def from_gridfile(fname, output, epsg):
         """
         Parse DNV CSV grid file.
         """
@@ -98,7 +101,7 @@ class Target:
         x = grid['X'].to_numpy()
         y = grid['Y'].to_numpy()
 
-        t = Target(output)
+        t = Target(output, epsg)
         t.xmin, t.xmax, t.ymin, t.ymax = xmin, xmax, ymin, ymax
         t.nx, t.ny = nx, ny
         t.x = x
