@@ -1,0 +1,24 @@
+# Scalar variables
+scalar_variables = [
+  'ice_concentration',
+]
+
+# Argument order must match input to calculating function.
+[derived_variables]
+# horizontal_visibility_rh = [ 'relative_humidity' ]
+
+# Vector variables to read into a single magnitude scalar field.
+[vector_magnitude_variables]
+# wind = ["x_wind", "y_wind"]
+current = ["x_sea_water", "y_sea_water"]
+
+[datasets.barents]
+url = "https://thredds.met.no/thredds/dodsC/fou-hi/barents_eps_zdepth_be"
+x = 'X'
+y = 'Y'
+
+[datasets.barents.variables]
+ice_concentration = 'ice_concentration'
+x_sea_water = 'u_eastward'
+y_sea_water = 'v_northward'
+

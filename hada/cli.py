@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
               multiple=True,
               help='Only include variables containing string')
 @click.option('--output', type=click.Path(), help='Output file')
+@click.option('--output-csv', type=click.Path(), help='Output CSV file')
 @click.option(
     '--always-valid',
     is_flag=True,
@@ -56,7 +57,8 @@ logger = logging.getLogger(__name__)
     'Use a KDTree to always map a point to the nearest valid value, regardless of distance'
 )
 def hada(log_level, sources, target_epsg, grid, bbox_deg, bbox_m, dx, dy, t0,
-         t1, freq, dataset_filter, variable_filter, output, always_valid):
+         t1, freq, dataset_filter, variable_filter, output, output_csv,
+         always_valid):
     coloredlogs.install(level=log_level)
 
     if t0 is None:
@@ -124,8 +126,14 @@ def hada(log_level, sources, target_epsg, grid, bbox_deg, bbox_m, dx, dy, t0,
         nx = np.max((int((bbox_d[1] - bbox_d[0]) / dx), 1))
         ny = np.max((int((bbox_d[3] - bbox_d[2]) / dy), 1))
 
-        target = Target.from_lonlat(bbox_d[0], bbox_d[1], bbox_d[2], bbox_d[3],
-                                    nx, ny, output, epsg=target_epsg)
+        target = Target.from_lonlat(bbox_d[0],
+                                    bbox_d[1],
+                                    bbox_d[2],
+                                    bbox_d[3],
+                                    nx,
+                                    ny,
+                                    output,
+                                    epsg=target_epsg)
 
     # Load datasets
     sources = Sources.from_toml(sources, dataset_filter, variable_filter)
@@ -192,6 +200,12 @@ def hada(log_level, sources, target_epsg, grid, bbox_deg, bbox_m, dx, dy, t0,
     if output is not None:
         logger.info(f'Saving dataset to file: {output}..')
         ds.to_netcdf(output, format='NETCDF4')
+
+    # Save to CSV file
+    if output_csv is not None:
+        logger.info(f'Saving to CSV file: {output_csv}..')
+        df = ds.to_dataframe()
+        df.to_csv(output_csv)
 
 
 if __name__ == '__main__':
