@@ -34,22 +34,30 @@ class Target:
         v = [v]
 
         if self.grid_id is not None:
-            vlon = xr.DataArray(name='lons', data=self.lon, coords=[ ('grid_id', self.grid_id)])
-            vlat = xr.DataArray(name='lats', data=self.lat, coords=[ ('grid_id', self.grid_id)])
-            vx = xr.DataArray(name='X', data=self.x, coords=[ ('grid_id', self.grid_id)])
-            vy = xr.DataArray(name='Y', data=self.y, coords=[ ('grid_id', self.grid_id)])
+            vlon = xr.DataArray(name='lons',
+                                data=self.lon,
+                                coords=[('grid_id', self.grid_id)])
+            vlat = xr.DataArray(name='lats',
+                                data=self.lat,
+                                coords=[('grid_id', self.grid_id)])
+            vx = xr.DataArray(name='X',
+                              data=self.x,
+                              coords=[('grid_id', self.grid_id)])
+            vy = xr.DataArray(name='Y',
+                              data=self.y,
+                              coords=[('grid_id', self.grid_id)])
 
             v.extend([vlon, vlat, vx, vy])
 
         return v
 
-    def __init__(self, output, epsg = DEFAULT_EPSG):
+    def __init__(self, output, epsg=None):
         self.output = output
-        self.epsg = epsg
+        self.epsg = epsg if epsg is not None else Target.DEFAULT_EPSG
         self.crs = pyproj.CRS.from_epsg(self.epsg)
 
     @staticmethod
-    def from_box(xmin, xmax, ymin, ymax, nx, ny, output, epsg):
+    def from_box(xmin, xmax, ymin, ymax, nx, ny, output, epsg=None):
         """
         Args:
 
@@ -81,7 +89,7 @@ class Target:
         return ccrs.epsg(self.epsg)
 
     @staticmethod
-    def from_gridfile(fname, output, epsg):
+    def from_gridfile(fname, output, epsg=None):
         """
         Parse DNV CSV grid file.
         """
