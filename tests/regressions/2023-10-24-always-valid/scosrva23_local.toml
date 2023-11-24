@@ -27,7 +27,7 @@ scalar_variables = [
 # Argument order must match input to calculating function.
 [derived_variables]
 #horizontal_visibility_rh = [ 'relative_humidity' ]
-horizontal_visibility_dew = [ 'dewpoint_temp_2m','air_temperature' ]
+horizontal_visibility_dew_C = [ 'dewpoint_temp_2m','air_temperature' ]
 
 # Vector variables to read into a single magnitude scalar field.
 [vector_magnitude_variables]

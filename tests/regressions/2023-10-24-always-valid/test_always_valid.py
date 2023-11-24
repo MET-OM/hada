@@ -20,10 +20,10 @@ def test_always_valid_hs(test_dir, tmpdir, runner):
         era2 = sourced / 'era2.nc'
 
         if not os.path.exists(era1):
-            subprocess.check_call("""wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1_0HFwzoBFZtglnV52Lt-PcMX4AOk98jr' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1_0HFwzoBFZtglnV52Lt-PcMX4AOk98jr" -O era1.nc && rm -rf /tmp/cookies.txt""", shell=True, cwd=sourced)
+            subprocess.check_call("""wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1_0HFwzoBFZtglnV52Lt-PcMX4AOk98jr' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1_0HFwzoBFZtglnV52Lt-PcMX4AOk98jr" -O era1.nc && rm /tmp/cookies.txt""", shell=True, cwd=sourced)
 
         if not os.path.exists(era2):
-            subprocess.check_call("""wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=18-6FjHuOBuR1xpuQiIn_0Z59mz91-WTR' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=18-6FjHuOBuR1xpuQiIn_0Z59mz91-WTR" -O era2.nc && rm -rf /tmp/cookies.txt""", shell=True, cwd=sourced)
+            subprocess.check_call("""wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=18-6FjHuOBuR1xpuQiIn_0Z59mz91-WTR' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=18-6FjHuOBuR1xpuQiIn_0Z59mz91-WTR" -O era2.nc && rm /tmp/cookies.txt""", shell=True, cwd=sourced)
 
 
         r = runner.invoke(hada, ['--sources', str(testd / 'scosrva23_local.toml'), '--grid', str(testd / 'GRID_SCOSRVA_Kyst_EPSG3575.csv'), '--output', td / 'test.nc', '--from', '2022-05-01', '--to', '2022-05-05', '--always-valid' ])
