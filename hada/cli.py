@@ -205,7 +205,13 @@ def hada(log_level, sources, target_epsg, grid, bbox_deg, bbox_m, dx, dy, t0,
     if output_csv is not None:
         logger.info(f'Saving to CSV file: {output_csv}..')
         df = ds.to_dataframe()
-        df.to_csv(output_csv)
+
+        if 'horizontal_visibility' in df.columns:
+            df['horizontal_visibility'] = int(df['horizontal_visibility'])
+
+        df = df.drop(columns=['target_proj', 'lons', 'lats', 'X', 'Y'])
+
+        df.to_csv(output_csv, float_format='%.2f')
 
 
 if __name__ == '__main__':
